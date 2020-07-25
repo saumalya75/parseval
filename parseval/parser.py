@@ -105,7 +105,7 @@ class FieldParser:
                 Column value or default value
             """
             try:
-                if not data:
+                if not data.strip():
                     if default_value:
                         return default_value
                     else:
@@ -260,7 +260,7 @@ class Parser:
                  parsed_row_sep: str = None):
         """
         :param input_row_format: str
-            Format of the input data stream, simple delimited/fixed width line or json/dict
+            Format of the input data stream, simple delimited/fixed-width line or json/dict
         :param input_row_sep: str
             If `row_format` is declared as "delimited" while creating perser object,
             then use `sep` to specify column delimiter.
@@ -272,7 +272,7 @@ class Parser:
             If `parsed_row_format` is declared as "delimited" while creating perser object,
             then use `parsed_sep` to specify column delimiter of output records.
         """
-        if input_row_format not in ["delimited", "json"]:
+        if input_row_format not in ["delimited", "fixed-width", "json"]:
             raise Exception("Only list of lines and list of jsons are supported a input.")
         self.input_row_format: str = input_row_format
         self.input_row_sep: str = input_row_sep
@@ -332,6 +332,21 @@ class Parser:
                     pdata.append(self.parsed_row_sep.join(plist))
                 else:
                     pdata.append(pdict)
+        elif self.input_row_format == "fixed-width":
+            pdata: typing.List[typing.Union[str, typing.Dict]] = []
+            for d in data:
+                plist: typing.List = []
+                pdict: typing.Dict = {}
+                for i, col in enumerate(self.schema):
+                    pd = self._parser_funcs[col[0]](d)
+                    if self.parsed_row_format == "delimited":
+                        plist.append(pd)
+                    else:
+                        pdict[col[0]] = pd
+                if self.parsed_row_format == "delimited":
+                    pdata.append(self.parsed_row_sep.join(plist))
+                else:
+                    pdata.append(pdict)
         else:
             pdata: typing.List = []
             for d in data:
@@ -364,5 +379,20 @@ if __name__ == "__main__":
         '""|ABC|A|ogoodcbd|2000|ABC',
         '"DEF"||abc|||',
         '"DEF"||||1200|AbF'
+    ])
+    print(parsed_data)
+    fw_schema = [
+        ('C1', FieldParser(1, 2)),
+        ('C2', FieldParser(3, 5).not_null('nan')),
+        ('C3', FieldParser(6, 6).value_set(['M', 'F'])),
+        ('C4', FieldParser(7, 11).not_null('dummy')),
+        ('C5', FieldParser(7, 11)),
+        ('C6', FieldParser(12, 13).max_value('20')),
+        ('C7', FieldParser(14, 15).min_value('AB'))
+    ]
+    p = Parser(schema=fw_schema, input_row_format='fixed-width', parsed_row_format='json')
+    parsed_data = p.parse([
+        'd0sauMvalue19Ac',
+        'd0sauM     19Ac'
     ])
     print(parsed_data)
