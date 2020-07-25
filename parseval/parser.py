@@ -12,7 +12,8 @@ try:
         ValidValueCheckException, \
         MaximumValueConstraintException, \
         MinimumValueConstraintException, \
-        RegexMatchException
+        RegexMatchException, \
+        IntegerParsingException
 except ImportError:
     from exceptions import UnexpectedSystemException, \
         UnexpectedParsingException, \
@@ -21,7 +22,8 @@ except ImportError:
         ValidValueCheckException, \
         MaximumValueConstraintException, \
         MinimumValueConstraintException, \
-        RegexMatchException
+        RegexMatchException, \
+        IntegerParsingException
 
 
 class FieldParser:
@@ -237,7 +239,7 @@ class StringParser(FieldParser):
     """
     def __init__(self, *args, **kwargs):
         """
-            Handing over the initialization to parent class.
+            Handing over object initialization to parent class.
         """
         super().__init__(*args, **kwargs)
 
@@ -254,8 +256,8 @@ class StringParser(FieldParser):
             Regex match closure.
             :param data: str
                 Column data.
-            :return: any
-                Column value
+            :return: str
+                Parsed column value
             """
             try:
                 if not re.match(pattern, data):
@@ -287,8 +289,8 @@ class StringParser(FieldParser):
             Change case closure.
             :param data: str
                 Column data.
-            :return: any
-                Column value
+            :return: str
+                Parsed Column value
             """
             try:
                 if case_type.upper() == 'S':
@@ -315,8 +317,41 @@ class NumericParser(FieldParser):
 
 
 class IntegerParser(FieldParser):
-    def __init__(self):
-        super().__init__()
+    """
+    Parser class for integer columns.
+    Inherits from `FieldParser` class.
+    Integer specific features:
+        None
+    Overridden features:
+        None
+    """
+    def __init__(self, *args, **kwargs):
+        """
+            Handing over object initialization to parent class.
+        """
+        super().__init__(*args, **kwargs)
+
+        def integer_casting(data: str):
+            """
+            Closure to cast the data to integer
+            :param data: str
+                Column value
+            :return: int
+                Parsed column value
+            """
+            try:
+                if data:
+                    return int(data)
+                else:
+                    return data
+            except Exception:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise IntegerParsingException("Column value - {} could not be casted into Integer.".format(data))
+
+        self.add_func(integer_casting)
+
 
 
 class DateParser(FieldParser):
@@ -412,7 +447,7 @@ class Parser:
                     else:
                         pdict[col[0]] = pd
                 if self.parsed_row_format == "delimited":
-                    pdata.append(self.parsed_row_sep.join(plist))
+                    pdata.append(self.parsed_row_sep.join((str(e) for e in plist)))
                 else:
                     pdata.append(pdict)
         elif self.input_row_format == "fixed-width":
@@ -427,7 +462,7 @@ class Parser:
                     else:
                         pdict[col[0]] = pd
                 if self.parsed_row_format == "delimited":
-                    pdata.append(self.parsed_row_sep.join(plist))
+                    pdata.append(self.parsed_row_sep.join((str(e) for e in plist)))
                 else:
                     pdata.append(pdict)
         else:
@@ -454,7 +489,7 @@ if __name__ == "__main__":
         ('C2', StringParser().regex_match(r'\w+_\d{4}-\d{2}-\d{2}').change_case('u')),
         ('C3', FieldParser(start=1, end=1).value_set(['a', 'b', 'A'])),
         ('C4', FieldParser(start=2, end=5).not_null('xnone')),
-        ('C5', FieldParser(start=1, end=2).max_value('20')),
+        ('C5', IntegerParser().max_value(2000)),
         ('C6', FieldParser(start=1, end=2).min_value('AB'))
     ]
     p = Parser(schema=schema)
@@ -470,12 +505,12 @@ if __name__ == "__main__":
         ('C3', FieldParser(6, 6).value_set(['M', 'F'])),
         ('C4', FieldParser(7, 11).not_null('dummy')),
         ('C5', FieldParser(7, 11)),
-        ('C6', FieldParser(12, 13).max_value('20')),
+        ('C6', IntegerParser(12, 13).max_value(20)),
         ('C7', FieldParser(14, 15).min_value('AB'))
     ]
     p = Parser(schema=fw_schema, input_row_format='fixed-width', parsed_row_format='json')
     parsed_data = p.parse([
         'd0sauMvalue19Ac',
-        'd0pouM     19Ac'
+        'd0pouM     20Ac'
     ])
     print(parsed_data)
