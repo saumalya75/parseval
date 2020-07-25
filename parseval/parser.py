@@ -1,7 +1,9 @@
+import re
 import sys
 import typing
 import functools
 import traceback
+
 try:
     from parseval.exceptions import UnexpectedSystemException, \
         UnexpectedParsingException, \
@@ -9,7 +11,8 @@ try:
         NullValueInNotNullFieldException, \
         ValidValueCheckException, \
         MaximumValueConstraintException, \
-        MinimumValueConstraintException
+        MinimumValueConstraintException, \
+        RegexMatchException
 except ImportError:
     from exceptions import UnexpectedSystemException, \
         UnexpectedParsingException, \
@@ -17,7 +20,8 @@ except ImportError:
         NullValueInNotNullFieldException, \
         ValidValueCheckException, \
         MaximumValueConstraintException, \
-        MinimumValueConstraintException
+        MinimumValueConstraintException, \
+        RegexMatchException
 
 
 class FieldParser:
@@ -222,8 +226,87 @@ class FieldParser:
 
 
 class StringParser(FieldParser):
-    def __init__(self):
-        super().__init__()
+    """
+    Parser class for string columns.
+    Inherits from `FieldParser` class.
+    String specific features:
+        - `regex_match`
+        - `change_case`
+    Overridden features:
+        None
+    """
+    def __init__(self, *args, **kwargs):
+        """
+            Handing over the initialization to parent class.
+        """
+        super().__init__(*args, **kwargs)
+
+    def regex_match(self, pattern: str, empty_allowed: bool = True):
+        """
+        Building regex match closure.
+        :param pattern: str
+            Patter to match with the data.
+        :return: StringParser
+            any
+        """
+        def pattern_match(data: str):
+            """
+            Regex match closure.
+            :param data: str
+                Column data.
+            :return: any
+                Column value
+            """
+            try:
+                if not re.match(pattern, data):
+                    if not (not data and empty_allowed):
+                        print(data)
+                        raise RegexMatchException(
+                            "Data - '{}' does not match with expected pattern - {}.".format(data, pattern)
+                        )
+                return data
+            except Exception as e:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise UnexpectedParsingException()
+
+        self.add_func(pattern_match)
+        return self
+
+    def change_case(self, case_type: str = 'S'):
+        """
+        Building change case closure.
+        :param case_type: str
+            Target case: {'U'/'u': UPPERCASE, 'L'/'l': lowercase, 'S'/'s': Sentence Case}
+        :return: StringParser
+            self
+        """
+        def change_case(data: str):
+            """
+            Change case closure.
+            :param data: str
+                Column data.
+            :return: any
+                Column value
+            """
+            try:
+                if case_type.upper() == 'S':
+                    return data.capitalize()
+                elif case_type.upper() == 'L':
+                    return data.lower()
+                elif case_type.upper() == 'U':
+                    return data.upper()
+                else:
+                    return data
+            except Exception as e:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise UnexpectedParsingException()
+
+        self.add_func(change_case)
+        return self
 
 
 class NumericParser(FieldParser):
@@ -368,7 +451,7 @@ class Parser:
 if __name__ == "__main__":
     schema = [
         ('C1', FieldParser(quoted=1)),
-        ('C2', FieldParser().not_null('default')),
+        ('C2', StringParser().regex_match(r'\w+_\d{4}-\d{2}-\d{2}').change_case('u')),
         ('C3', FieldParser(start=1, end=1).value_set(['a', 'b', 'A'])),
         ('C4', FieldParser(start=2, end=5).not_null('xnone')),
         ('C5', FieldParser(start=1, end=2).max_value('20')),
@@ -376,14 +459,14 @@ if __name__ == "__main__":
     ]
     p = Parser(schema=schema)
     parsed_data = p.parse([
-        '""|ABC|A|ogoodcbd|2000|ABC',
+        '""|Trig_2020-23-12|A|ogoodcbd|2000|ABC',
         '"DEF"||abc|||',
-        '"DEF"||||1200|AbF'
+        '"DEF"|Manual_2020-23-12|||1200|AbF'
     ])
     print(parsed_data)
     fw_schema = [
         ('C1', FieldParser(1, 2)),
-        ('C2', FieldParser(3, 5).not_null('nan')),
+        ('C2', StringParser(3, 5).change_case('U').not_null('nan')),
         ('C3', FieldParser(6, 6).value_set(['M', 'F'])),
         ('C4', FieldParser(7, 11).not_null('dummy')),
         ('C5', FieldParser(7, 11)),
@@ -393,6 +476,6 @@ if __name__ == "__main__":
     p = Parser(schema=fw_schema, input_row_format='fixed-width', parsed_row_format='json')
     parsed_data = p.parse([
         'd0sauMvalue19Ac',
-        'd0sauM     19Ac'
+        'd0pouM     19Ac'
     ])
     print(parsed_data)

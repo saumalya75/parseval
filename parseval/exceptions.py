@@ -73,3 +73,14 @@ class MinimumValueConstraintException(BaseException):
 
     def __repr__(self):
         return f"<MinimumValueConstraintException({self.msg})>"
+
+
+class RegexMatchException(BaseException):
+    def __init__(self, msg="Provided value does not match with expected pattern."):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
+
+    def __repr__(self):
+        return f"<RegexMatchException({self.msg})>"
