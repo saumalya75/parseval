@@ -3,13 +3,21 @@ import typing
 import functools
 import traceback
 try:
-    from parseval.exceptions import NullValueInNotNullFieldException, \
+    from parseval.exceptions import UnexpectedSystemException, \
+        UnexpectedParsingException, \
         SchemaBuildException, \
-        UnexpectedSystemException
+        NullValueInNotNullFieldException, \
+        ValidValueCheckException, \
+        MaximumValueConstraintException, \
+        MinimumValueConstraintException
 except ImportError:
-    from exceptions import NullValueInNotNullFieldException, \
+    from exceptions import UnexpectedSystemException, \
+        UnexpectedParsingException, \
         SchemaBuildException, \
-        UnexpectedSystemException
+        NullValueInNotNullFieldException, \
+        ValidValueCheckException, \
+        MaximumValueConstraintException, \
+        MinimumValueConstraintException
 
 
 class FieldParser:
@@ -18,9 +26,9 @@ class FieldParser:
     """
 
     def __init__(self,
-                 quoted: int = 0,
                  start: int = 0,
-                 end: int = 0
+                 end: int = 0,
+                 quoted: int = 0
                  ):
         """
         Field parser constructor.
@@ -38,7 +46,7 @@ class FieldParser:
         self._nullable: bool = False
         self._funcs: typing.List = []
         if start and end:
-            self.add_func(lambda s: s[start - 1:end - 1])
+            self.add_func(lambda s: s[start - 1:end])
         if quoted == 1:
             self.add_func(lambda s: s.lstrip('"').rstrip('"'))
         elif quoted == 2:
@@ -52,7 +60,7 @@ class FieldParser:
         """
         try:
             if self._funcs:
-                return functools.reduce(lambda foo, bar: lambda s: foo(bar(s)), self._funcs)
+                return functools.reduce(lambda foo, bar: lambda s: bar(foo(s)), self._funcs)
             else:
                 return lambda x: x
         except Exception as e:
@@ -96,15 +104,120 @@ class FieldParser:
             :return: any
                 Column value or default value
             """
-            if not data:
-                if default_value:
-                    return default_value
+            try:
+                if not data:
+                    if default_value:
+                        return default_value
+                    else:
+                        raise NullValueInNotNullFieldException()
                 else:
-                    raise NullValueInNotNullFieldException()
-            else:
-                return data
+                    return data
+            except Exception as e:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise UnexpectedParsingException()
 
         self.add_func(null_check)
+        return self
+
+    def value_set(self, values: typing.List, nullable: bool = True):
+        """
+        Building valid value check closure.
+        :param values: typing.List
+            Set of valid values for this column.
+        :param nullable: bool
+            If set to True then empty string and None will be treated as valid value
+        :return: FieldParser
+            self
+        """
+        if nullable:
+            values.extend(['', None])
+
+        def valid_value_check(data: any):
+            """
+            Valid value check closure.
+            :param data: any
+                Column data.
+            :return: any
+                Column value
+            """
+            try:
+                if data not in values:
+                    raise ValidValueCheckException("Provided value - '{}' is not part of valid value list - {}.".format(data, values))
+                else:
+                    return data
+            except Exception as e:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise UnexpectedParsingException()
+
+        self.add_func(valid_value_check)
+        return self
+
+    def max_value(self, val: any):
+        """
+        Building maximum value check closure.
+        :param val: any
+            Maximum allowed value for the column.
+        :return: FieldParser
+            self
+        """
+        def valid_value_check(data: any):
+            """
+            Maximum value check closure.
+            :param data: any
+                Column data.
+            :return: any
+                Column value
+            """
+            try:
+                if data:
+                    if data > val:
+                        raise MaximumValueConstraintException(
+                            "Provided value - '{}' is higher than maximum allowed value - {}.".format(data, val)
+                        )
+                return data
+            except Exception as e:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise UnexpectedParsingException()
+
+        self.add_func(valid_value_check)
+        return self
+
+    def min_value(self, val: any):
+        """
+        Building minimum value check closure.
+        :param val: any
+            Maximum allowed value for the column.
+        :return: FieldParser
+            self
+        """
+        def valid_value_check(data: any):
+            """
+            Minimum value check closure.
+            :param data: any
+                Column data.
+            :return: any
+                Column value
+            """
+            try:
+                if data:
+                    if data < val:
+                        raise MinimumValueConstraintException(
+                            "Provided value - '{}' is lower than minimum allowed value - {}.".format(data, val)
+                        )
+                return data
+            except Exception as e:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise UnexpectedParsingException()
+
+        self.add_func(valid_value_check)
         return self
 
 
@@ -239,9 +352,17 @@ class Parser:
 
 if __name__ == "__main__":
     schema = [
-        ('C1', FieldParser()),
-        ('C2', FieldParser().not_null('abc'))
+        ('C1', FieldParser(quoted=1)),
+        ('C2', FieldParser().not_null('default')),
+        ('C3', FieldParser(start=1, end=1).value_set(['a', 'b', 'A'])),
+        ('C4', FieldParser(start=2, end=5).not_null('xnone')),
+        ('C5', FieldParser(start=1, end=2).max_value('20')),
+        ('C6', FieldParser(start=1, end=2).min_value('AB'))
     ]
     p = Parser(schema=schema)
-    parsed_data = p.parse(['|ABC', 'DEF|'])
+    parsed_data = p.parse([
+        '""|ABC|A|ogoodcbd|2000|ABC',
+        '"DEF"||abc|||',
+        '"DEF"||||1200|AbF'
+    ])
     print(parsed_data)
