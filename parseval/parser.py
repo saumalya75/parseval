@@ -13,7 +13,8 @@ try:
         MaximumValueConstraintException, \
         MinimumValueConstraintException, \
         RegexMatchException, \
-        IntegerParsingException
+        IntegerParsingException, \
+        FloatParsingException
 except ImportError:
     from exceptions import UnexpectedSystemException, \
         UnexpectedParsingException, \
@@ -23,7 +24,8 @@ except ImportError:
         MaximumValueConstraintException, \
         MinimumValueConstraintException, \
         RegexMatchException, \
-        IntegerParsingException
+        IntegerParsingException, \
+        FloatParsingException
 
 
 class FieldParser:
@@ -112,7 +114,7 @@ class FieldParser:
             """
             try:
                 if not data.strip():
-                    if default_value:
+                    if default_value is not None:
                         return default_value
                     else:
                         raise NullValueInNotNullFieldException()
@@ -311,9 +313,75 @@ class StringParser(FieldParser):
         return self
 
 
-class NumericParser(FieldParser):
-    def __init__(self):
-        super().__init__()
+class FloatParser(FieldParser):
+    """
+    Parser class for float columns.
+    Inherits from `FieldParser` class.
+    Float specific features:
+        None
+    Overridden features:
+        None
+    """
+    def __init__(self, *args, **kwargs):
+        """
+            Handing over object initialization to parent class.
+        """
+        super().__init__(*args, **kwargs)
+
+        def float_casting(data: str):
+            """
+            Closure to cast the data to float
+            :param data: str
+                Column value
+            :return: int
+                Parsed column value
+            """
+            try:
+                if data:
+                    return float(data)
+                else:
+                    return data
+            except Exception:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise FloatParsingException("Column value - {} could not be casted into Float.".format(data))
+
+        self.add_func(float_casting)
+
+    def not_null(self, default_value: any = None):
+        """
+        Building not null check closure.
+        :param default_value: any
+            Default value for a column which should be not null.
+        :return: FloatParser
+            self
+        """
+
+        def null_check(data: any):
+            """
+            Null Check closure.
+            :param data: any
+                Column data.
+            :return: any
+                Column value or default value
+            """
+            try:
+                if not data:
+                    if default_value is not None:
+                        return default_value
+                    else:
+                        raise NullValueInNotNullFieldException()
+                else:
+                    return data
+            except Exception as e:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise UnexpectedParsingException()
+
+        self.add_func(null_check)
+        return self
 
 
 class IntegerParser(FieldParser):
@@ -352,6 +420,39 @@ class IntegerParser(FieldParser):
 
         self.add_func(integer_casting)
 
+    def not_null(self, default_value: any = None):
+        """
+        Building not null check closure.
+        :param default_value: any
+            Default value for a column which should be not null.
+        :return: IntegerParser
+            self
+        """
+
+        def null_check(data: any):
+            """
+            Null Check closure.
+            :param data: any
+                Column data.
+            :return: any
+                Column value or default value
+            """
+            try:
+                if not data:
+                    if default_value is not None:
+                        return default_value
+                    else:
+                        raise NullValueInNotNullFieldException()
+                else:
+                    return data
+            except Exception as e:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise UnexpectedParsingException()
+
+        self.add_func(null_check)
+        return self
 
 
 class DateParser(FieldParser):
@@ -490,13 +591,13 @@ if __name__ == "__main__":
         ('C3', FieldParser(start=1, end=1).value_set(['a', 'b', 'A'])),
         ('C4', FieldParser(start=2, end=5).not_null('xnone')),
         ('C5', IntegerParser().max_value(2000)),
-        ('C6', FieldParser(start=1, end=2).min_value('AB'))
+        ('C6', FloatParser().min_value(10.0).not_null(0))
     ]
     p = Parser(schema=schema)
     parsed_data = p.parse([
-        '""|Trig_2020-23-12|A|ogoodcbd|2000|ABC',
+        '""|Trig_2020-23-12|A|ogoodcbd|2000|21.0934',
         '"DEF"||abc|||',
-        '"DEF"|Manual_2020-23-12|||1200|AbF'
+        '"DEF"|Manual_2020-23-12|||1200|11'
     ])
     print(parsed_data)
     fw_schema = [
@@ -506,11 +607,12 @@ if __name__ == "__main__":
         ('C4', FieldParser(7, 11).not_null('dummy')),
         ('C5', FieldParser(7, 11)),
         ('C6', IntegerParser(12, 13).max_value(20)),
-        ('C7', FieldParser(14, 15).min_value('AB'))
+        ('C7', FloatParser(14, 17).min_value(10.0))
     ]
     p = Parser(schema=fw_schema, input_row_format='fixed-width', parsed_row_format='json')
     parsed_data = p.parse([
-        'd0sauMvalue19Ac',
-        'd0pouM     20Ac'
+        'd0sauMvalue191000',
+        'd0pouM     2090.03'
     ])
     print(parsed_data)
+
