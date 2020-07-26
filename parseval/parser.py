@@ -242,8 +242,8 @@ class StringParser(FieldParser):
     Parser class for string columns.
     Inherits from `FieldParser` class.
     String specific features:
-        - `regex_match`
-        - `change_case`
+        - regex_match
+        - change_case
     Overridden features:
         - not_null (to handle prolonged white spaces)
     """
@@ -448,10 +448,12 @@ class DatetimeParser(FieldParser):
     Parser class for date/datetime columns.
     Inherits from `FieldParser` class.
     Date/Datetime specific features:
-        - Fromat checking
+        - Format checking
         - convert
     Overridden features:
-        None
+        - not null check
+        - maximum value check
+        - minimum value check
     """
 
     def __init__(self,
