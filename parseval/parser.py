@@ -113,7 +113,7 @@ class FieldParser:
                 Column value or default value
             """
             try:
-                if not data.strip():
+                if not data:
                     if default_value is not None:
                         return default_value
                     else:
@@ -135,7 +135,9 @@ class FieldParser:
         :param values: typing.List
             Set of valid values for this column.
         :param nullable: bool
-            If set to True then empty string and None will be treated as valid value
+            If set to `True` then empty string and None will be treated as valid value,
+             along with the provided value list.
+            By default, `True`
         :return: FieldParser
             self
         """
@@ -237,7 +239,7 @@ class StringParser(FieldParser):
         - `regex_match`
         - `change_case`
     Overridden features:
-        None
+        - not_null (to handle prolonged white spaces)
     """
     def __init__(self, *args, **kwargs):
         """
@@ -245,11 +247,15 @@ class StringParser(FieldParser):
         """
         super().__init__(*args, **kwargs)
 
-    def regex_match(self, pattern: str, empty_allowed: bool = True):
+    def regex_match(self, pattern: str, nullable: bool = True):
         """
         Building regex match closure.
         :param pattern: str
             Patter to match with the data.
+        :param nullable: bool
+            If set to `True` then empty string and None will be treated as valid value,
+             along with the values that matches provided `pattern`.
+            By default, `True`
         :return: StringParser
             any
         """
@@ -263,7 +269,7 @@ class StringParser(FieldParser):
             """
             try:
                 if not re.match(pattern, data):
-                    if not (not data and empty_allowed):
+                    if not (not data and nullable):
                         print(data)
                         raise RegexMatchException(
                             "Data - '{}' does not match with expected pattern - {}.".format(data, pattern)
@@ -312,13 +318,52 @@ class StringParser(FieldParser):
         self.add_func(change_case)
         return self
 
+    def not_null(self, default_value: any = None, allow_white_space: bool = False):
+        """
+        Building not null check closure.
+        :param default_value: any
+            Default value for a column which should be not null.
+        :param allow_white_space: bool
+            Decides whether only white spaces should be treated as null or not.
+            If white spacesa re allowed, then `not_null('   ')` will return True.
+            By default it is set to `False`.
+        :return: StringParser
+            self
+        """
+
+        def null_check(data: any):
+            """
+            Null Check closure.
+            :param data: any
+                Column data.
+            :return: any
+                Column value or default value
+            """
+            try:
+                data = data if allow_white_space else data.strip()
+                if not data:
+                    if default_value is not None:
+                        return default_value
+                    else:
+                        raise NullValueInNotNullFieldException()
+                else:
+                    return data
+            except Exception as e:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise UnexpectedParsingException()
+
+        self.add_func(null_check)
+        return self
+
 
 class FloatParser(FieldParser):
     """
     Parser class for float columns.
     Inherits from `FieldParser` class.
     Float specific features:
-        None
+        - float_casting
     Overridden features:
         None
     """
@@ -349,47 +394,13 @@ class FloatParser(FieldParser):
 
         self.add_func(float_casting)
 
-    def not_null(self, default_value: any = None):
-        """
-        Building not null check closure.
-        :param default_value: any
-            Default value for a column which should be not null.
-        :return: FloatParser
-            self
-        """
-
-        def null_check(data: any):
-            """
-            Null Check closure.
-            :param data: any
-                Column data.
-            :return: any
-                Column value or default value
-            """
-            try:
-                if not data:
-                    if default_value is not None:
-                        return default_value
-                    else:
-                        raise NullValueInNotNullFieldException()
-                else:
-                    return data
-            except Exception as e:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
-                raise UnexpectedParsingException()
-
-        self.add_func(null_check)
-        return self
-
 
 class IntegerParser(FieldParser):
     """
     Parser class for integer columns.
     Inherits from `FieldParser` class.
     Integer specific features:
-        None
+        - integer_casting
     Overridden features:
         None
     """
@@ -420,47 +431,16 @@ class IntegerParser(FieldParser):
 
         self.add_func(integer_casting)
 
-    def not_null(self, default_value: any = None):
-        """
-        Building not null check closure.
-        :param default_value: any
-            Default value for a column which should be not null.
-        :return: IntegerParser
-            self
-        """
-
-        def null_check(data: any):
-            """
-            Null Check closure.
-            :param data: any
-                Column data.
-            :return: any
-                Column value or default value
-            """
-            try:
-                if not data:
-                    if default_value is not None:
-                        return default_value
-                    else:
-                        raise NullValueInNotNullFieldException()
-                else:
-                    return data
-            except Exception as e:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
-                raise UnexpectedParsingException()
-
-        self.add_func(null_check)
-        return self
-
-
-class DateParser(FieldParser):
-    def __init__(self):
-        super().__init__()
-
 
 class DatetimeParser(FieldParser):
+    """
+    Parser class for date/datetime columns.
+    Inherits from `FieldParser` class.
+    Date/Datetime specific features:
+        Formatting dates/datetimes
+    Overridden features:
+        None
+    """
     def __init__(self):
         super().__init__()
 
@@ -590,7 +570,7 @@ if __name__ == "__main__":
         ('C2', StringParser().regex_match(r'\w+_\d{4}-\d{2}-\d{2}').change_case('u')),
         ('C3', FieldParser(start=1, end=1).value_set(['a', 'b', 'A'])),
         ('C4', FieldParser(start=2, end=5).not_null('xnone')),
-        ('C5', IntegerParser().max_value(2000)),
+        ('C5', IntegerParser().max_value(2000).not_null(default_value=0)),
         ('C6', FloatParser().min_value(10.0).not_null(0))
     ]
     p = Parser(schema=schema)
@@ -602,7 +582,7 @@ if __name__ == "__main__":
     print(parsed_data)
     fw_schema = [
         ('C1', FieldParser(1, 2)),
-        ('C2', StringParser(3, 5).change_case('U').not_null('nan')),
+        ('C2', StringParser(3, 5).change_case('U').not_null('nan', allow_white_space=True)),
         ('C3', FieldParser(6, 6).value_set(['M', 'F'])),
         ('C4', FieldParser(7, 11).not_null('dummy')),
         ('C5', FieldParser(7, 11)),
