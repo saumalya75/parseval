@@ -106,3 +106,14 @@ class FloatParsingException(BaseException):
 
     def __repr__(self):
         return f"<FloatParsingException({self.msg})>"
+
+
+class DateTimeParsingException(BaseException):
+    def __init__(self, msg="Column value is not aligned to the provided formats."):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
+
+    def __repr__(self):
+        return f"<DateTimeParsingException({self.msg})>"

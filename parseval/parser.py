@@ -1,6 +1,7 @@
 import re
 import sys
 import typing
+import datetime
 import functools
 import traceback
 
@@ -14,7 +15,8 @@ try:
         MinimumValueConstraintException, \
         RegexMatchException, \
         IntegerParsingException, \
-        FloatParsingException
+        FloatParsingException, \
+        DateTimeParsingException
 except ImportError:
     from exceptions import UnexpectedSystemException, \
         UnexpectedParsingException, \
@@ -25,7 +27,8 @@ except ImportError:
         MinimumValueConstraintException, \
         RegexMatchException, \
         IntegerParsingException, \
-        FloatParsingException
+        FloatParsingException, \
+        DateTimeParsingException
 
 
 class FieldParser:
@@ -154,7 +157,8 @@ class FieldParser:
             """
             try:
                 if data not in values:
-                    raise ValidValueCheckException("Provided value - '{}' is not part of valid value list - {}.".format(data, values))
+                    raise ValidValueCheckException(
+                        "Provided value - '{}' is not part of valid value list - {}.".format(data, values))
                 else:
                     return data
             except Exception as e:
@@ -166,14 +170,15 @@ class FieldParser:
         self.add_func(valid_value_check)
         return self
 
-    def max_value(self, val: any):
+    def max_value(self, value: any):
         """
         Building maximum value check closure.
-        :param val: any
+        :param value: any
             Maximum allowed value for the column.
         :return: FieldParser
             self
         """
+
         def valid_value_check(data: any):
             """
             Maximum value check closure.
@@ -184,9 +189,9 @@ class FieldParser:
             """
             try:
                 if data:
-                    if data > val:
+                    if data > value:
                         raise MaximumValueConstraintException(
-                            "Provided value - '{}' is higher than maximum allowed value - {}.".format(data, val)
+                            "Provided value - '{}' is higher than maximum allowed value - {}.".format(data, value)
                         )
                 return data
             except Exception as e:
@@ -198,14 +203,15 @@ class FieldParser:
         self.add_func(valid_value_check)
         return self
 
-    def min_value(self, val: any):
+    def min_value(self, value: any):
         """
         Building minimum value check closure.
-        :param val: any
+        :param value: any
             Maximum allowed value for the column.
         :return: FieldParser
             self
         """
+
         def valid_value_check(data: any):
             """
             Minimum value check closure.
@@ -216,9 +222,9 @@ class FieldParser:
             """
             try:
                 if data:
-                    if data < val:
+                    if data < value:
                         raise MinimumValueConstraintException(
-                            "Provided value - '{}' is lower than minimum allowed value - {}.".format(data, val)
+                            "Provided value - '{}' is lower than minimum allowed value - {}.".format(data, value)
                         )
                 return data
             except Exception as e:
@@ -241,6 +247,7 @@ class StringParser(FieldParser):
     Overridden features:
         - not_null (to handle prolonged white spaces)
     """
+
     def __init__(self, *args, **kwargs):
         """
             Handing over object initialization to parent class.
@@ -259,6 +266,7 @@ class StringParser(FieldParser):
         :return: StringParser
             any
         """
+
         def pattern_match(data: str):
             """
             Regex match closure.
@@ -292,6 +300,7 @@ class StringParser(FieldParser):
         :return: StringParser
             self
         """
+
         def change_case(data: str):
             """
             Change case closure.
@@ -367,6 +376,7 @@ class FloatParser(FieldParser):
     Overridden features:
         None
     """
+
     def __init__(self, *args, **kwargs):
         """
             Handing over object initialization to parent class.
@@ -404,6 +414,7 @@ class IntegerParser(FieldParser):
     Overridden features:
         None
     """
+
     def __init__(self, *args, **kwargs):
         """
             Handing over object initialization to parent class.
@@ -437,12 +448,267 @@ class DatetimeParser(FieldParser):
     Parser class for date/datetime columns.
     Inherits from `FieldParser` class.
     Date/Datetime specific features:
-        Formatting dates/datetimes
+        - Fromat checking
+        - convert
     Overridden features:
         None
     """
-    def __init__(self):
-        super().__init__()
+
+    def __init__(self,
+                 start: int = 0,
+                 end: int = 0,
+                 formats: typing.List = ['%Y%m%d', '%Y%md%H%M%S'],
+                 quoted: int = 0
+                 ):
+        """
+            Initiating DateTime Parser object with a little help of parents.
+        """
+        self._formats = formats
+        super().__init__(start=start, end=end, quoted=quoted)
+
+        def format_checker(data: str):
+            """
+            Closure to read and format date/datetime data. This closure validates the data format,
+            as well as returns a datetime object. Please use `convert` closure to reformat data,
+            or to store it in string format.
+            :param data: str
+                Column value
+            :return: str
+                Column value
+            """
+            if not data:
+                return data
+            for f in self._formats:
+                try:
+                    datetime.datetime.strptime(data, f)
+                    return data
+                except Exception:
+                    pass
+            raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
+                                           .format(data, self._formats)
+                                           )
+
+        self.add_func(format_checker)
+
+    def not_null(self, default_value: typing.Union[str, datetime.datetime] = None, format: str = '%Y-%m-%d %H:%M:%S'):
+        """
+        Building not null check closure.
+        :param default_value: typing.Union[str, datetime.datetime]
+            Default value for a column which should be not null.
+        :param format: str
+            Format in which the default value is provided.
+        :return: DatetimeParser
+            self
+        """
+        if default_value:
+            if type(default_value) == str:
+                try:
+                    datetime.datetime.strptime(default_value, format)
+                except Exception:
+                    print('~' * 100)
+                    traceback.print_exc(file=sys.stdout)
+                    print('~' * 100)
+                    raise UnexpectedParsingException("Provided default value - '{}' is not of '{}' format."
+                                                     .format(default_value, format)
+                                                     )
+            else:
+                try:
+                    default_value = datetime.datetime.strftime(default_value, format)
+                except Exception:
+                    print('~' * 100)
+                    traceback.print_exc(file=sys.stdout)
+                    print('~' * 100)
+                    raise UnexpectedParsingException(
+                        "Provided default value - '{}' could not be casted into '{}' format.".format(
+                            default_value,
+                            format
+                        )
+                    )
+            self._formats += [format]
+
+        def null_check(data: any):
+            """
+            Null Check closure.
+            :param data: any
+                Column data.
+            :return: any
+                Column value or default value
+            """
+            try:
+                if not data:
+                    if default_value:
+                        return default_value
+                    else:
+                        raise NullValueInNotNullFieldException()
+                else:
+                    return data
+            except Exception as e:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise UnexpectedParsingException()
+
+        self.add_func(null_check)
+        return self
+
+    def convert(self, format: str = '%Y-%m-%d'):
+        """
+        Closure to convert datetime/date column to desired string format
+        :param format: str
+            Column value
+        :return: DatetimeParser
+            self
+        """
+        self._formats += [format]
+
+        def str_from_date(data: str):
+            """
+            Format conversion closure.
+            :param data: str
+                Column data.
+            :return: any
+                Re-formatted column value
+            """
+            try:
+                if not data:
+                    return data
+                for f in self._formats:
+                    try:
+                        pd = datetime.datetime.strptime(data, f)
+                        break
+                    except Exception:
+                        pass
+                else:
+                    raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
+                                                   .format(data, self._formats)
+                                                   )
+                return datetime.datetime.strftime(pd, format)
+            except Exception as e:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                DateTimeParsingException("It was not possible to convert column data - '{}' to '{}' format."
+                                         .format(data, format)
+                                         )
+
+        self.add_func(str_from_date)
+        return self
+
+    def max_value(self, value: typing.Union[str, datetime.datetime], format: str = '%Y-%m-%d %H:%M:%S'):
+        """
+        Building maximum value check closure.
+        :param value: typing.Union[str, datetime.datetime]
+            Maximum allowed value for a column.
+        :param format: str
+            Format in which the default value is provided.
+        :return: DatetimeParser
+            self
+        """
+        if type(value) == str:
+            try:
+                max_val = datetime.datetime.strptime(value, format)
+            except Exception:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise UnexpectedParsingException("Provided maximum allowed value - '{}' is not of '{}' format."
+                                                 .format(value, format)
+                                                 )
+        else:
+            max_val = value
+
+        def valid_value_check(data: str):
+            """
+            Maximum value check closure.
+            :param data: str
+                Column data.
+            :return: any
+                Checked column value
+            """
+            try:
+                if not data:
+                    return data
+                for f in self._formats:
+                    try:
+                        pd = datetime.datetime.strptime(data, f)
+                        break
+                    except Exception:
+                        pass
+                else:
+                    raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
+                                                   .format(data, self._formats)
+                                                   )
+                if pd > max_val:
+                    raise MaximumValueConstraintException(
+                        "Column value - '{}' is higher than maximum allowed value - {}.".format(data, value)
+                    )
+                return data
+            except Exception as e:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise UnexpectedParsingException()
+
+        self.add_func(valid_value_check)
+        return self
+
+    def min_value(self, value: typing.Union[str, datetime.datetime], format: str = '%Y-%m-%d %H:%M:%S'):
+        """
+        Building minimum value check closure.
+        :param value: typing.Union[str, datetime.datetime]
+            Minimum allowed value for a column.
+        :param format: str
+            Format in which the default value is provided.
+        :return: DatetimeParser
+            self
+        """
+        if type(value) == str:
+            try:
+                min_val = datetime.datetime.strptime(value, format)
+            except Exception:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise UnexpectedParsingException("Provided minimum allowed value - '{}' is not of '{}' format."
+                                                 .format(value, format)
+                                                 )
+        else:
+            min_val = value
+
+        def valid_value_check(data: str):
+            """
+            Minimum value check closure.
+            :param data: str
+                Column data.
+            :return: any
+                Checked column value
+            """
+            try:
+                if not data:
+                    return data
+                for f in self._formats:
+                    try:
+                        pd = datetime.datetime.strptime(data, f)
+                        break
+                    except Exception:
+                        pass
+                else:
+                    raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
+                                                   .format(data, self._formats)
+                                                   )
+                if pd < min_val:
+                    raise MinimumValueConstraintException(
+                        "Column value - '{}' is lower than minimum allowed value - {}.".format(data, value)
+                    )
+                return data
+            except Exception as e:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise UnexpectedParsingException()
+
+        self.add_func(valid_value_check)
+        return self
 
 
 class Parser:
@@ -567,17 +833,33 @@ class Parser:
 if __name__ == "__main__":
     schema = [
         ('C1', FieldParser(quoted=1)),
-        ('C2', StringParser().regex_match(r'\w+_\d{4}-\d{2}-\d{2}').change_case('u')),
-        ('C3', FieldParser(start=1, end=1).value_set(['a', 'b', 'A'])),
-        ('C4', FieldParser(start=2, end=5).not_null('xnone')),
-        ('C5', IntegerParser().max_value(2000).not_null(default_value=0)),
-        ('C6', FloatParser().min_value(10.0).not_null(0))
+        ('C2', StringParser()
+         .regex_match(r'\w+_\d{4}-\d{2}-\d{2}')
+         .change_case('u')
+         ),
+        ('C3', FieldParser(start=1, end=1)
+         .value_set(['a', 'b', 'A'])
+         ),
+        ('C4', DatetimeParser(formats=['%Y%m%d', '%Y-%m-%d %H:%M:%S'])
+         .convert('%Y/%m/%d')
+         .max_value(datetime.datetime.now())
+         .min_value(value='20000101', format='%Y%m%d')
+         .not_null(datetime.datetime.strptime('19001231', '%Y%m%d'))
+         ),
+        ('C5', IntegerParser()
+         .max_value(2000)
+         .not_null(default_value=0)
+         ),
+        ('C6', FloatParser()
+         .min_value(10.0)
+         .not_null(0)
+         )
     ]
     p = Parser(schema=schema)
     parsed_data = p.parse([
-        '""|Trig_2020-23-12|A|ogoodcbd|2000|21.0934',
+        '""|Trig_2020-23-12|A|20200123|2000|21.0934',
         '"DEF"||abc|||',
-        '"DEF"|Manual_2020-23-12|||1200|11'
+        '"DEF"|Manual_2020-23-12||2020-01-23 10:20:23|1200|11'
     ])
     print(parsed_data)
     fw_schema = [
