@@ -278,7 +278,6 @@ class StringParser(FieldParser):
             try:
                 if not re.match(pattern, data):
                     if not (not data and nullable):
-                        print(data)
                         raise RegexMatchException(
                             "Data - '{}' does not match with expected pattern - {}.".format(data, pattern)
                         )
@@ -713,6 +712,21 @@ class DatetimeParser(FieldParser):
         return self
 
 
+class ConstantParser(FieldParser):
+    """
+    Parser class for hard coded columns.
+    Inherits from `FieldParser` class.
+    """
+
+    def __init__(self, value: str):
+        """
+            Initializing `ConstantParser` with hard coded value.
+            It will always return the same value.
+        """
+        super().__init__()
+        self.add_func(lambda x: value)
+
+
 class Parser:
     """
     `Parser` class is the entry point for the utility.
@@ -785,12 +799,31 @@ class Parser:
 
         if self.input_row_format == "delimited":
             pdata: typing.List[typing.Union[str, typing.Dict]] = []
-            for d in data:
+            for line_number, d in enumerate(data):
                 dlist: typing.List = d.split(self.input_row_sep)
+                if len(dlist) > len(self.schema):
+                    raise UnexpectedParsingException(
+                        "Number of columns in line - {} is higher that number of declared columns in schema.".format(
+                            line_number + 1
+                        )
+                    )
                 plist: typing.List = []
                 pdict: typing.Dict = {}
                 for i, col in enumerate(self.schema):
-                    pd = self._parser_funcs[col[0]](dlist[i])
+                    try:
+                        pd = self._parser_funcs[col[0]](dlist[i])
+                    except:
+                        print("<" * 50, end='')
+                        print(">" * 50)
+                        print('LINE NUMBER: {}'.format(
+                            line_number + 1
+                        ))
+                        print('COLUMN NAME: {}'.format(
+                            col[0]
+                        ))
+                        print("<" * 50, end='')
+                        print(">" * 50)
+                        raise
                     if self.parsed_row_format == "delimited":
                         plist.append(pd)
                     else:
@@ -801,11 +834,24 @@ class Parser:
                     pdata.append(pdict)
         elif self.input_row_format == "fixed-width":
             pdata: typing.List[typing.Union[str, typing.Dict]] = []
-            for d in data:
+            for line_number, d in enumerate(data):
                 plist: typing.List = []
                 pdict: typing.Dict = {}
                 for i, col in enumerate(self.schema):
-                    pd = self._parser_funcs[col[0]](d)
+                    try:
+                        pd = self._parser_funcs[col[0]](d)
+                    except:
+                        print("<" * 50, end='')
+                        print(">" * 50)
+                        print('LINE NUMBER: {}'.format(
+                            line_number + 1
+                        ))
+                        print('COLUMN NAME: {}'.format(
+                            col[0]
+                        ))
+                        print("<" * 50, end='')
+                        print(">" * 50)
+                        raise
                     if self.parsed_row_format == "delimited":
                         plist.append(pd)
                     else:
@@ -816,15 +862,35 @@ class Parser:
                     pdata.append(pdict)
         else:
             pdata: typing.List = []
-            for d in data:
+            for line_number, d in enumerate(data):
+                if len(list(d.keys())) > len(self.schema):
+                    raise UnexpectedParsingException(
+                        "Number of columns in line - {} is higher that number of declared columns in schema.".format(
+                            line_number + 1
+                        )
+                    )
                 plist: typing.List = []
                 pdict: typing.Dict = {}
                 for col, _ in self.schema:
-                    pd = self._parser_funcs[col](d[col])
-                    if self.parsed_row_format == "delimited":
-                        plist.append(pd)
-                    else:
-                        pdict[col[0]] = pd
+                    if d.get(col, None):
+                        try:
+                            pd = self._parser_funcs[col](d[col])
+                        except:
+                            print("<" * 50, end='')
+                            print(">" * 50)
+                            print('LINE NUMBER: {}'.format(
+                                line_number + 1
+                            ))
+                            print('COLUMN NAME: {}'.format(
+                                col[0]
+                            ))
+                            print("<" * 50, end='')
+                            print(">" * 50)
+                            raise
+                        if self.parsed_row_format == "delimited":
+                            plist.append(pd)
+                        else:
+                            pdict[col[0]] = pd
                 if self.parsed_row_format == "delimited":
                     pdata.append(self.parsed_row_sep.join(plist))
                 else:
@@ -855,13 +921,14 @@ if __name__ == "__main__":
         ('C6', FloatParser()
          .min_value(10.0)
          .not_null(0)
-         )
+         ),
+        ('C7', ConstantParser('Iron-Man'))
     ]
     p = Parser(schema=schema)
     parsed_data = p.parse([
-        '""|Trig_2020-23-12|A|20200123|2000|21.0934',
-        '"DEF"||abc|||',
-        '"DEF"|Manual_2020-23-12||2020-01-23 10:20:23|1200|11'
+        '""|Trig_2020-23-12|A|20200123|2000|21.0934|',
+        '"DEF"||abc||||',
+        '"DEF"|Manual_2020-23-12||2020-01-23 10:20:23|1200|11|'
     ])
     print(parsed_data)
     fw_schema = [
