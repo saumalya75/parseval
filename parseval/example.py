@@ -3,6 +3,18 @@ try:
 except ImportError:
     from parser import *
 
+
+def parity_check(data):
+    if data:
+        try:
+            i_Data = int(data)
+        except:
+            pass
+        if i_Data % 2 != 0:
+            raise Exception("The data has to be even!")
+    return data
+
+
 if __name__ == "__main__":
     """
     Example with delimited data
@@ -30,13 +42,14 @@ if __name__ == "__main__":
          .min_value(10.0)
          .not_null(0)
          ),
-        ('C7', ConstantParser('Iron-Man'))
+        ('C7', ConstantParser('Iron-Man')),
+        ('C8', IntegerParser().add_func(parity_check))
     ]
     p = Parser(schema=schema)
     parsed_data = p.parse([
-        '""|Trig_2020-23-12|A|20200123|2000|21.0934|',
-        '"DEF"||abc||||',
-        '"DEF"|Manual_2020-23-12||2020-01-23 10:20:23|1200|11|'
+        '""|Trig_2020-23-12|A|20200123|2000|21.0934||10',
+        '"DEF"||abc|||||34',
+        '"DEF"|Manual_2020-23-12||2020-01-23 10:20:23|1200|11||'
     ])
     print(parsed_data)
 
