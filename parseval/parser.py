@@ -8,6 +8,7 @@ import traceback
 try:
     from parseval.exceptions import UnexpectedSystemException, \
         UnexpectedParsingException, \
+        UnsupportedDatatypeException, \
         SchemaBuildException, \
         NullValueInNotNullFieldException, \
         ValidValueCheckException, \
@@ -20,6 +21,7 @@ try:
 except ImportError:
     from exceptions import UnexpectedSystemException, \
         UnexpectedParsingException, \
+        UnsupportedDatatypeException, \
         SchemaBuildException, \
         NullValueInNotNullFieldException, \
         ValidValueCheckException, \
@@ -54,6 +56,7 @@ class FieldParser:
             Fixed width files can be parsed using this parameter along with `start` parameter.
             Using this parameter along with `start` parameter data snipping is also possible.
         """
+        self.dtype = str
         self._nullable: bool = False
         self._funcs: typing.List = []
         if start and end:
@@ -106,6 +109,10 @@ class FieldParser:
         :return: FieldParser
             self
         """
+        if type(default_value) != self.dtype:
+            raise UnsupportedDatatypeException(f"{type(default_value)} type data can not be used as default value of"
+                                               f" {self.dtype} type column. Please provide default value of"
+                                               f" {self.dtype} type.")
 
         def null_check(data: any):
             """
@@ -143,6 +150,11 @@ class FieldParser:
         :return: FieldParser
             self
         """
+        dtypes = set(type(v) for v in values)
+        if len(dtypes) > 1 or list(dtypes)[0] != self.dtype:
+            raise UnsupportedDatatypeException(f"Provided valid values are not fit for"
+                                               f" {self.dtype} type column. Please provide valid values of"
+                                               f" {self.dtype} type.")
         if nullable:
             values.extend(['', None])
 
@@ -176,6 +188,10 @@ class FieldParser:
         :return: FieldParser
             self
         """
+        if type(value) != self.dtype:
+            raise UnsupportedDatatypeException(f"{type(value)} type data can not be used as maximum value of"
+                                               f" {self.dtype} type column. Please provide maximum value of"
+                                               f" {self.dtype} type.")
 
         def valid_value_check(data: any):
             """
@@ -208,6 +224,10 @@ class FieldParser:
         :return: FieldParser
             self
         """
+        if type(value) != self.dtype:
+            raise UnsupportedDatatypeException(f"{type(value)} type data can not be used as minimum value of"
+                                               f" {self.dtype} type column. Please provide minimum value of"
+                                               f" {self.dtype} type.")
 
         def valid_value_check(data: any):
             """
@@ -232,6 +252,20 @@ class FieldParser:
 
         return self.add_func(valid_value_check)
 
+    def range(self, lower_bound: any, upper_bound: any):
+        """
+        Building range check API, max_val and min_val APIs will be used to achieve this.
+        :param lower_bound: any
+            Minimum allowed value for the column.
+        :param upper_bound: any
+            Maximum allowed value for the column.
+        :return: FieldParser
+            self
+        """
+        self.min_value(lower_bound)
+        self.max_value(upper_bound)
+        return self
+
 
 class StringParser(FieldParser):
     """
@@ -249,6 +283,7 @@ class StringParser(FieldParser):
             Handing over object initialization to parent class.
         """
         super().__init__(*args, **kwargs)
+        self.dtype = str
 
     def regex_match(self, pattern: str, nullable: bool = True):
         """
@@ -374,6 +409,7 @@ class FloatParser(FieldParser):
             Handing over object initialization to parent class.
         """
         super().__init__(*args, **kwargs)
+        self.dtype = float
 
         def float_casting(data: str):
             """
@@ -412,6 +448,7 @@ class IntegerParser(FieldParser):
             Handing over object initialization to parent class.
         """
         super().__init__(*args, **kwargs)
+        self.dtype = int
 
         def integer_casting(data: str):
             """
@@ -700,6 +737,26 @@ class DatetimeParser(FieldParser):
 
         return self.add_func(valid_value_check)
 
+    def range(self,
+              lower_bound: typing.Union[str, datetime.datetime],
+              upper_bound: typing.Union[str, datetime.datetime],
+              format: str = '%Y-%m-%d %H:%M:%S'
+              ):
+        """
+        Building range check API, max_val and min_val APIs will be used to achieve this.
+        :param lower_bound: typing.Union[str, datetime.datetime]
+            Minimum allowed value for the column.
+        :param upper_bound: typing.Union[str, datetime.datetime]
+            Maximum allowed value for the column.
+        :param format: str
+            Format in which the default value is provided.
+        :return: FieldParser
+            self
+        """
+        self.min_value(lower_bound, format)
+        self.max_value(upper_bound, format)
+        return self
+
 
 class ConstantParser(FieldParser):
     """
@@ -885,4 +942,3 @@ class Parser:
                 else:
                     pdata.append(pdict)
         return pdata
-

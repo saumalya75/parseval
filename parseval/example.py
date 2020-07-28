@@ -40,10 +40,10 @@ if __name__ == "__main__":
          ),
         ('C6', FloatParser()
          .min_value(10.0)
-         .not_null(0)
+         .not_null(0.0)
          ),
         ('C7', ConstantParser('Iron-Man')),
-        ('C8', IntegerParser().add_func(parity_check))
+        ('C8', IntegerParser().add_func(parity_check).range(0, 40))
     ]
     p = Parser(schema=schema)
     parsed_data = p.parse([

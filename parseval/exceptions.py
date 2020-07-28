@@ -20,6 +20,17 @@ class UnexpectedParsingException(BaseException):
         return f"<UnexpectedParsingException({self.msg})>"
 
 
+class UnsupportedDatatypeException(BaseException):
+    def __init__(self, msg="Unsupported datatype for column."):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
+
+    def __repr__(self):
+        return f"<UnsupportedDatatypeException({self.msg})>"
+
+
 class SchemaBuildException(BaseException):
     def __init__(self, msg="Unexpected error occurred while building the schema. Please declare the schema properly."):
         self.msg = msg
