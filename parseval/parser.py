@@ -828,12 +828,12 @@ class Parser:
             self._parser_funcs[k] = v.build()
         return True
 
-    def parse(self, data: typing.List[typing.Union[str, typing.Dict]]):
+    def parse(self, data: typing.Union[typing.List[typing.Union[str, typing.Dict]], typing.TextIO]):
         """
-        :param data: typing.List[typing.Union[str, typing.Dict]]
+        :param data: typing.List[typing.Union[str, typing.Dict, typing.IO]]
             Takes input data as list of string or list of json
         :return: typing.List[typing.Union[str, typing.Dict]]
-            Parsed data
+            Generator object of Parsed data
         """
         try:
             self._build()
@@ -842,10 +842,11 @@ class Parser:
             traceback.print_exc(file=sys.stdout)
             print('~' * 100)
             raise SchemaBuildException()
-
+        data
         if self.input_row_format == "delimited":
             pdata: typing.List[typing.Union[str, typing.Dict]] = []
-            for line_number, d in enumerate(data):
+            line_number = 0
+            for d in data:
                 dlist: typing.List = d.split(self.input_row_sep)
                 if len(dlist) > len(self.schema):
                     raise UnexpectedParsingException(
@@ -878,9 +879,11 @@ class Parser:
                     pdata.append(self.parsed_row_sep.join((str(e) for e in plist)))
                 else:
                     pdata.append(pdict)
+                line_number += 1
         elif self.input_row_format == "fixed-width":
             pdata: typing.List[typing.Union[str, typing.Dict]] = []
-            for line_number, d in enumerate(data):
+            line_number = 0
+            for d in data:
                 plist: typing.List = []
                 pdict: typing.Dict = {}
                 for i, col in enumerate(self.schema):
@@ -906,9 +909,11 @@ class Parser:
                     pdata.append(self.parsed_row_sep.join((str(e) for e in plist)))
                 else:
                     pdata.append(pdict)
+                line_number += 1
         else:
             pdata: typing.List = []
-            for line_number, d in enumerate(data):
+            line_number = 0
+            for d in data:
                 if len(list(d.keys())) > len(self.schema):
                     raise UnexpectedParsingException(
                         "Number of columns in line - {} is higher that number of declared columns in schema.".format(
@@ -941,4 +946,5 @@ class Parser:
                     pdata.append(self.parsed_row_sep.join(plist))
                 else:
                     pdata.append(pdict)
+                line_number += 1
         return pdata
