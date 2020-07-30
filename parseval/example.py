@@ -1,3 +1,4 @@
+import tempfile
 try:
     from parseval.parser import *
 except ImportError:
@@ -40,23 +41,47 @@ if __name__ == "__main__":
          ),
         ('C6', FloatParser()
          .min_value(10.0)
-         .not_null(0)
+         .not_null(0.0)
          ),
         ('C7', ConstantParser('Iron-Man')),
-        ('C8', IntegerParser().add_func(parity_check))
+        ('C8', IntegerParser().add_func(parity_check).range(0, 40))
     ]
-    p = Parser(schema=schema)
+    p = Parser(schema=schema, stop_on_error=-1)
+
+    """
+        Input structure: List of rows
+    """
     parsed_data = p.parse([
-        '""|Trig_2020-23-12|A|20200123|2000|21.0934||10',
+        '""|Trig_202-23-12|A|20200123|2000|21.0934||10',
         '"DEF"||abc|||||34',
-        '"DEF"|Manual_2020-23-12||2020-01-23 10:20:23|1200|11||'
+        '"DEF"|Manual2020-23-12||2020-01-23 10:20:23|1200|11||'
     ])
-    print(parsed_data)
+    for line in parsed_data:
+        print(line)
+    print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+          " LIST OF LINES ARE PARSED "
+          ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
+    """
+        Input structure: File object
+    """
+    p = Parser(schema=schema, stop_on_error=1)
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, 'w') as sf:
+            sf.writelines('""|Trig2020-23-12|A|20200123|2000|21.0934||10\n')
+            sf.writelines('"DEF"||abc|||||34\n')
+            sf.writelines('"DEF"|Manual_2020-23-12||2020-01-23 10:20:23|1200|11||')
 
+        with open(tf.name, 'r') as sf:
+            for line in p.parse(sf):
+                print(line)
+    print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+          " FILE DATA IS PARSED "
+          ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     """
     Example with Fixed-width data
     """
+    p = Parser(schema=schema, stop_on_error=0)
     fw_schema = [
         ('C1', FieldParser(1, 2)),
         ('C2', StringParser(3, 5).change_case('U').not_null('nan', allow_white_space=True)),
@@ -71,5 +96,9 @@ if __name__ == "__main__":
         'd0sauMvalue191000',
         'd0pouM     2090.03'
     ])
-    print(parsed_data)
+    for line in parsed_data:
+        print(line)
+    print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+          " FIXED-WIDTH LINES ARE PARSED "
+          ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 

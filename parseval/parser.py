@@ -8,6 +8,7 @@ import traceback
 try:
     from parseval.exceptions import UnexpectedSystemException, \
         UnexpectedParsingException, \
+        UnsupportedDatatypeException, \
         SchemaBuildException, \
         NullValueInNotNullFieldException, \
         ValidValueCheckException, \
@@ -20,6 +21,7 @@ try:
 except ImportError:
     from exceptions import UnexpectedSystemException, \
         UnexpectedParsingException, \
+        UnsupportedDatatypeException, \
         SchemaBuildException, \
         NullValueInNotNullFieldException, \
         ValidValueCheckException, \
@@ -54,6 +56,7 @@ class FieldParser:
             Fixed width files can be parsed using this parameter along with `start` parameter.
             Using this parameter along with `start` parameter data snipping is also possible.
         """
+        self.dtype = str
         self._nullable: bool = False
         self._funcs: typing.List = []
         if start and end:
@@ -106,6 +109,10 @@ class FieldParser:
         :return: FieldParser
             self
         """
+        if type(default_value) != self.dtype:
+            raise UnsupportedDatatypeException(f"{type(default_value)} type data can not be used as default value of"
+                                               f" {self.dtype} type column. Please provide default value of"
+                                               f" {self.dtype} type.")
 
         def null_check(data: any):
             """
@@ -143,6 +150,11 @@ class FieldParser:
         :return: FieldParser
             self
         """
+        dtypes = set(type(v) for v in values)
+        if len(dtypes) > 1 or list(dtypes)[0] != self.dtype:
+            raise UnsupportedDatatypeException(f"Provided valid values are not fit for"
+                                               f" {self.dtype} type column. Please provide valid values of"
+                                               f" {self.dtype} type.")
         if nullable:
             values.extend(['', None])
 
@@ -176,6 +188,10 @@ class FieldParser:
         :return: FieldParser
             self
         """
+        if type(value) != self.dtype:
+            raise UnsupportedDatatypeException(f"{type(value)} type data can not be used as maximum value of"
+                                               f" {self.dtype} type column. Please provide maximum value of"
+                                               f" {self.dtype} type.")
 
         def valid_value_check(data: any):
             """
@@ -208,6 +224,10 @@ class FieldParser:
         :return: FieldParser
             self
         """
+        if type(value) != self.dtype:
+            raise UnsupportedDatatypeException(f"{type(value)} type data can not be used as minimum value of"
+                                               f" {self.dtype} type column. Please provide minimum value of"
+                                               f" {self.dtype} type.")
 
         def valid_value_check(data: any):
             """
@@ -232,6 +252,20 @@ class FieldParser:
 
         return self.add_func(valid_value_check)
 
+    def range(self, lower_bound: any, upper_bound: any):
+        """
+        Building range check API, max_val and min_val APIs will be used to achieve this.
+        :param lower_bound: any
+            Minimum allowed value for the column.
+        :param upper_bound: any
+            Maximum allowed value for the column.
+        :return: FieldParser
+            self
+        """
+        self.min_value(lower_bound)
+        self.max_value(upper_bound)
+        return self
+
 
 class StringParser(FieldParser):
     """
@@ -249,6 +283,7 @@ class StringParser(FieldParser):
             Handing over object initialization to parent class.
         """
         super().__init__(*args, **kwargs)
+        self.dtype = str
 
     def regex_match(self, pattern: str, nullable: bool = True):
         """
@@ -374,6 +409,7 @@ class FloatParser(FieldParser):
             Handing over object initialization to parent class.
         """
         super().__init__(*args, **kwargs)
+        self.dtype = float
 
         def float_casting(data: str):
             """
@@ -412,6 +448,7 @@ class IntegerParser(FieldParser):
             Handing over object initialization to parent class.
         """
         super().__init__(*args, **kwargs)
+        self.dtype = int
 
         def integer_casting(data: str):
             """
@@ -700,6 +737,26 @@ class DatetimeParser(FieldParser):
 
         return self.add_func(valid_value_check)
 
+    def range(self,
+              lower_bound: typing.Union[str, datetime.datetime],
+              upper_bound: typing.Union[str, datetime.datetime],
+              format: str = '%Y-%m-%d %H:%M:%S'
+              ):
+        """
+        Building range check API, max_val and min_val APIs will be used to achieve this.
+        :param lower_bound: typing.Union[str, datetime.datetime]
+            Minimum allowed value for the column.
+        :param upper_bound: typing.Union[str, datetime.datetime]
+            Maximum allowed value for the column.
+        :param format: str
+            Format in which the default value is provided.
+        :return: FieldParser
+            self
+        """
+        self.min_value(lower_bound, format)
+        self.max_value(upper_bound, format)
+        return self
+
 
 class ConstantParser(FieldParser):
     """
@@ -727,7 +784,8 @@ class Parser:
                  input_row_format: str = "delimited",
                  input_row_sep: str = "|",
                  parsed_row_format: str = "delimited",
-                 parsed_row_sep: str = None):
+                 parsed_row_sep: str = None,
+                 stop_on_error: int = 0):
         """
         :param input_row_format: str
             Format of the input data stream, simple delimited/fixed-width line or json/dict
@@ -757,6 +815,7 @@ class Parser:
                         "`parsed_sep` keyword argment is mandatory while `parsed_row_format` argumet is provided as 'delimited'.")
             else:
                 self.parsed_row_sep: str = parsed_row_sep
+        self.stop_on_error = stop_on_error
         self._parser_funcs: typing.Dict = {}
 
     def _build(self):
@@ -771,12 +830,12 @@ class Parser:
             self._parser_funcs[k] = v.build()
         return True
 
-    def parse(self, data: typing.List[typing.Union[str, typing.Dict]]):
+    def parse(self, data: typing.Union[typing.List[typing.Union[str, typing.Dict]], typing.TextIO]):
         """
-        :param data: typing.List[typing.Union[str, typing.Dict]]
+        :param data: typing.List[typing.Union[str, typing.Dict, typing.IO]]
             Takes input data as list of string or list of json
-        :return: typing.List[typing.Union[str, typing.Dict]]
-            Parsed data
+        :return(yield): typing.Union[str, typing.Dict]
+            Yields parsed line one be one
         """
         try:
             self._build()
@@ -785,85 +844,23 @@ class Parser:
             traceback.print_exc(file=sys.stdout)
             print('~' * 100)
             raise SchemaBuildException()
-
         if self.input_row_format == "delimited":
-            pdata: typing.List[typing.Union[str, typing.Dict]] = []
-            for line_number, d in enumerate(data):
-                dlist: typing.List = d.split(self.input_row_sep)
-                if len(dlist) > len(self.schema):
-                    raise UnexpectedParsingException(
-                        "Number of columns in line - {} is higher that number of declared columns in schema.".format(
-                            line_number + 1
+            line_number = 0
+            errornous_line_count = 0
+            for d in data:
+                try:
+                    dlist: typing.List = d.split(self.input_row_sep)
+                    if len(dlist) > len(self.schema):
+                        raise UnexpectedParsingException(
+                            "Number of columns in line - {} is higher that number of declared columns in schema.".format(
+                                line_number + 1
+                            )
                         )
-                    )
-                plist: typing.List = []
-                pdict: typing.Dict = {}
-                for i, col in enumerate(self.schema):
-                    try:
-                        pd = self._parser_funcs[col[0]](dlist[i])
-                    except:
-                        print("<" * 50, end='')
-                        print(">" * 50)
-                        print('LINE NUMBER: {}'.format(
-                            line_number + 1
-                        ))
-                        print('COLUMN NAME: {}'.format(
-                            col[0]
-                        ))
-                        print("<" * 50, end='')
-                        print(">" * 50)
-                        raise
-                    if self.parsed_row_format == "delimited":
-                        plist.append(pd)
-                    else:
-                        pdict[col[0]] = pd
-                if self.parsed_row_format == "delimited":
-                    pdata.append(self.parsed_row_sep.join((str(e) for e in plist)))
-                else:
-                    pdata.append(pdict)
-        elif self.input_row_format == "fixed-width":
-            pdata: typing.List[typing.Union[str, typing.Dict]] = []
-            for line_number, d in enumerate(data):
-                plist: typing.List = []
-                pdict: typing.Dict = {}
-                for i, col in enumerate(self.schema):
-                    try:
-                        pd = self._parser_funcs[col[0]](d)
-                    except:
-                        print("<" * 50, end='')
-                        print(">" * 50)
-                        print('LINE NUMBER: {}'.format(
-                            line_number + 1
-                        ))
-                        print('COLUMN NAME: {}'.format(
-                            col[0]
-                        ))
-                        print("<" * 50, end='')
-                        print(">" * 50)
-                        raise
-                    if self.parsed_row_format == "delimited":
-                        plist.append(pd)
-                    else:
-                        pdict[col[0]] = pd
-                if self.parsed_row_format == "delimited":
-                    pdata.append(self.parsed_row_sep.join((str(e) for e in plist)))
-                else:
-                    pdata.append(pdict)
-        else:
-            pdata: typing.List = []
-            for line_number, d in enumerate(data):
-                if len(list(d.keys())) > len(self.schema):
-                    raise UnexpectedParsingException(
-                        "Number of columns in line - {} is higher that number of declared columns in schema.".format(
-                            line_number + 1
-                        )
-                    )
-                plist: typing.List = []
-                pdict: typing.Dict = {}
-                for col, _ in self.schema:
-                    if d.get(col, None):
+                    plist: typing.List = []
+                    pdict: typing.Dict = {}
+                    for i, col in enumerate(self.schema):
                         try:
-                            pd = self._parser_funcs[col](d[col])
+                            pd = self._parser_funcs[col[0]](dlist[i])
                         except:
                             print("<" * 50, end='')
                             print(">" * 50)
@@ -880,9 +877,105 @@ class Parser:
                             plist.append(pd)
                         else:
                             pdict[col[0]] = pd
-                if self.parsed_row_format == "delimited":
-                    pdata.append(self.parsed_row_sep.join(plist))
-                else:
-                    pdata.append(pdict)
-        return pdata
-
+                    if self.parsed_row_format == "delimited":
+                        yield self.parsed_row_sep.join((str(e) for e in plist))
+                    else:
+                        yield pdict
+                    line_number += 1
+                except BaseException as e:
+                    if self.stop_on_error < 0 or errornous_line_count < self.stop_on_error:
+                        print(str(e))
+                        print("DATA >>> ")
+                        print(d)
+                        print("CONTINUING TO PARSE DATA BECAUSE STOP_ON_ERROR CONDITION NOT MET YET!")
+                        errornous_line_count += 1
+                    else:
+                        raise e
+        elif self.input_row_format == "fixed-width":
+            line_number = 0
+            errornous_line_count = 0
+            for d in data:
+                try:
+                    plist: typing.List = []
+                    pdict: typing.Dict = {}
+                    for i, col in enumerate(self.schema):
+                        try:
+                            pd = self._parser_funcs[col[0]](d)
+                        except:
+                            print("<" * 50, end='')
+                            print(">" * 50)
+                            print('LINE NUMBER: {}'.format(
+                                line_number + 1
+                            ))
+                            print('COLUMN NAME: {}'.format(
+                                col[0]
+                            ))
+                            print("<" * 50, end='')
+                            print(">" * 50)
+                            raise
+                        if self.parsed_row_format == "delimited":
+                            plist.append(pd)
+                        else:
+                            pdict[col[0]] = pd
+                    if self.parsed_row_format == "delimited":
+                        yield self.parsed_row_sep.join((str(e) for e in plist))
+                    else:
+                        yield pdict
+                    line_number += 1
+                except BaseException as e:
+                    if self.stop_on_error < 0 or errornous_line_count < self.stop_on_error:
+                        print(str(e))
+                        print("DATA >>> ")
+                        print(d)
+                        errornous_line_count += 1
+                        print("CONTINUING TO PARSE DATA BECAUSE STOP_ON_ERROR CONDITION NOT MET YET!")
+                    else:
+                        raise e
+        else:
+            line_number = 0
+            errornous_line_count = 0
+            for d in data:
+                try:
+                    if len(list(d.keys())) > len(self.schema):
+                        raise UnexpectedParsingException(
+                            "Number of columns in line - {} is higher that number of declared columns in schema.".format(
+                                line_number + 1
+                            )
+                        )
+                    plist: typing.List = []
+                    pdict: typing.Dict = {}
+                    for col, _ in self.schema:
+                        if d.get(col, None):
+                            try:
+                                pd = self._parser_funcs[col](d[col])
+                            except:
+                                print("<" * 50, end='')
+                                print(">" * 50)
+                                print('LINE NUMBER: {}'.format(
+                                    line_number + 1
+                                ))
+                                print('COLUMN NAME: {}'.format(
+                                    col[0]
+                                ))
+                                print("<" * 50, end='')
+                                print(">" * 50)
+                                raise
+                            if self.parsed_row_format == "delimited":
+                                plist.append(pd)
+                            else:
+                                pdict[col[0]] = pd
+                    if self.parsed_row_format == "delimited":
+                        yield self.parsed_row_sep.join(plist)
+                    else:
+                        yield pdict
+                    line_number += 1
+                except BaseException as e:
+                    if self.stop_on_error < 0 or errornous_line_count < self.stop_on_error:
+                        print(str(e))
+                        print("DATA >>> ")
+                        print(d)
+                        errornous_line_count += 1
+                        print("CONTINUING TO PARSE DATA BECAUSE STOP_ON_ERROR CONDITION NOT MET YET!")
+                    else:
+                        raise e
+        # return pdata
