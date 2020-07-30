@@ -56,7 +56,8 @@ if __name__ == "__main__":
         '"DEF"||abc|||||34',
         '"DEF"|Manual_2020-23-12||2020-01-23 10:20:23|1200|11||'
     ])
-    print(parsed_data)
+    for line in parsed_data:
+        print(line)
     print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
           " LIST OF LINES ARE PARSED "
           ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
@@ -93,7 +94,8 @@ if __name__ == "__main__":
         'd0sauMvalue191000',
         'd0pouM     2090.03'
     ])
-    print(parsed_data)
+    for line in parsed_data:
+        print(line)
     print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
           " FIXED-WIDTH IS PARSED "
           ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")

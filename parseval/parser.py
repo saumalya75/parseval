@@ -832,8 +832,8 @@ class Parser:
         """
         :param data: typing.List[typing.Union[str, typing.Dict, typing.IO]]
             Takes input data as list of string or list of json
-        :return: typing.List[typing.Union[str, typing.Dict]]
-            Generator object of Parsed data
+        :return(yield): typing.Union[str, typing.Dict]
+            Yields parsed line one be one
         """
         try:
             self._build()
@@ -842,9 +842,8 @@ class Parser:
             traceback.print_exc(file=sys.stdout)
             print('~' * 100)
             raise SchemaBuildException()
-        data
         if self.input_row_format == "delimited":
-            pdata: typing.List[typing.Union[str, typing.Dict]] = []
+            # pdata: typing.List[typing.Union[str, typing.Dict]] = []
             line_number = 0
             for d in data:
                 dlist: typing.List = d.split(self.input_row_sep)
@@ -876,12 +875,12 @@ class Parser:
                     else:
                         pdict[col[0]] = pd
                 if self.parsed_row_format == "delimited":
-                    pdata.append(self.parsed_row_sep.join((str(e) for e in plist)))
+                    yield self.parsed_row_sep.join((str(e) for e in plist))
                 else:
-                    pdata.append(pdict)
+                    yield pdict
                 line_number += 1
         elif self.input_row_format == "fixed-width":
-            pdata: typing.List[typing.Union[str, typing.Dict]] = []
+            # pdata: typing.List[typing.Union[str, typing.Dict]] = []
             line_number = 0
             for d in data:
                 plist: typing.List = []
@@ -906,12 +905,12 @@ class Parser:
                     else:
                         pdict[col[0]] = pd
                 if self.parsed_row_format == "delimited":
-                    pdata.append(self.parsed_row_sep.join((str(e) for e in plist)))
+                    yield self.parsed_row_sep.join((str(e) for e in plist))
                 else:
-                    pdata.append(pdict)
+                    yield pdict
                 line_number += 1
         else:
-            pdata: typing.List = []
+            # pdata: typing.List = []
             line_number = 0
             for d in data:
                 if len(list(d.keys())) > len(self.schema):
@@ -943,8 +942,8 @@ class Parser:
                         else:
                             pdict[col[0]] = pd
                 if self.parsed_row_format == "delimited":
-                    pdata.append(self.parsed_row_sep.join(plist))
+                    yield self.parsed_row_sep.join(plist)
                 else:
-                    pdata.append(pdict)
+                    yield pdict
                 line_number += 1
-        return pdata
+        # return pdata
