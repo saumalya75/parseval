@@ -1,3 +1,4 @@
+import tempfile
 try:
     from parseval.parser import *
 except ImportError:
@@ -46,14 +47,35 @@ if __name__ == "__main__":
         ('C8', IntegerParser().add_func(parity_check).range(0, 40))
     ]
     p = Parser(schema=schema)
+
+    """
+        Input structure: List of rows
+    """
     parsed_data = p.parse([
         '""|Trig_2020-23-12|A|20200123|2000|21.0934||10',
         '"DEF"||abc|||||34',
         '"DEF"|Manual_2020-23-12||2020-01-23 10:20:23|1200|11||'
     ])
     print(parsed_data)
+    print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+          " LIST OF LINES ARE PARSED "
+          ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
+    """
+        Input structure: File object
+    """
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, 'w') as sf:
+            sf.writelines('""|Trig_2020-23-12|A|20200123|2000|21.0934||10\n')
+            sf.writelines('"DEF"||abc|||||34\n')
+            sf.writelines('"DEF"|Manual_2020-23-12||2020-01-23 10:20:23|1200|11||')
 
+        with open(tf.name, 'r') as sf:
+            for line in p.parse(sf):
+                print(line)
+    print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+          " FILE DATA IS PARSED "
+          ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
     """
     Example with Fixed-width data
     """
@@ -72,4 +94,7 @@ if __name__ == "__main__":
         'd0pouM     2090.03'
     ])
     print(parsed_data)
+    print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+          " FIXED-WIDTH IS PARSED "
+          ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
