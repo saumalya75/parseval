@@ -74,7 +74,7 @@ class FieldParser:
         """
         try:
             if self._funcs:
-                return functools.reduce(lambda foo, bar: lambda s: bar(foo(s)), self._funcs)
+                return functools.reduce(lambda parser1, parser2: lambda s: parser2(parser1(s)), self._funcs)
             else:
                 return lambda x: x
         except Exception as e:
