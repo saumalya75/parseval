@@ -757,6 +757,77 @@ class DatetimeParser(FieldParser):
         self.max_value(upper_bound, format)
         return self
 
+    def value_set(self,
+                  values: typing.List[typing.Union[str, datetime.datetime]],
+                  format: str = '%Y-%m-%d %H:%M:%S',
+                  nullable: bool = True
+        ):
+        """
+        Building valid value check closure.
+        :param values: typing.List[typing.Union[str, datetime.datetime]]
+            Set of valid values for this column.
+        :param nullable: bool
+            If set to `True` then empty string and None will be treated as valid value,
+             along with the provided value list.
+            By default, `True`
+        :param format: str
+            Format in which the allowed values are provided.
+        :return: FieldParser
+            self
+        """
+        valid_values = []
+        if values:
+            for value in values:
+                if type(value) == str:
+                    try:
+                        valid_values.append(datetime.datetime.strptime(value, format))
+                    except Exception:
+                        print('~' * 100)
+                        traceback.print_exc(file=sys.stdout)
+                        print('~' * 100)
+                        raise UnexpectedParsingException("Provided allowed value - '{}' is not of '{}' format."
+                                                         .format(value, format)
+                                                         )
+                else:
+                    valid_values.append(value)
+
+        if nullable:
+            values.extend(['', None])
+
+        def valid_value_check(data: any):
+            """
+            Valid value check closure.
+            :param data: any
+                Column data.
+            :return: any
+                Column value
+            """
+            try:
+                if not data:
+                    return data
+                for f in self._formats:
+                    try:
+                        pd = datetime.datetime.strptime(data, f)
+                        break
+                    except Exception:
+                        pass
+                else:
+                    raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
+                                                   .format(data, self._formats)
+                                                   )
+                if pd not in valid_values:
+                    raise ValidValueCheckException(
+                        "Provided value - '{}' is not part of valid value list - {}.".format(data, values))
+                else:
+                    return data
+            except Exception as e:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise UnexpectedParsingException()
+
+        return self.add_func(valid_value_check)
+
 
 class ConstantParser(FieldParser):
     """
@@ -799,6 +870,12 @@ class Parser:
         :param parsed_row_sep: str
             If `parsed_row_format` is declared as "delimited" while creating perser object,
             then use `parsed_sep` to specify column delimiter of output records.
+        :param stop_on_error: int
+            When `stop_on_error` value is set to **0**, the process will stop on encountering an validation error.
+            When `stop_on_error` value is set to `any negative number`, the process will skip all erroneous rows
+            and return only valid rows,
+            When `stop_on_error` value is set to `any specific positive number`, the process will allow those many
+            erroneous rows, if erroneous rows exceeds that number, the process will fail..
         """
         if input_row_format not in ["delimited", "fixed-width", "json"]:
             raise Exception("Only list of lines and list of jsons are supported a input.")
