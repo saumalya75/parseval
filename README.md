@@ -1,15 +1,15 @@
 # `parseval`: A pythonic data validator 
 **_parseval_** is a data validation tool for python. It provides numerous API to parse and validate data for all native data-types. it handles data on atomic level and focuses on validation part primarily.
-<pre>
-</pre>
+
+
 Currently `parseval` supports following data types:  
 * String  
 * Integer  
 * Numeric/Float  
 * Date  
 * DateTime  
-<pre>
-</pre>
+
+
 The library will be updated in future to support more native data types and some complex types. Users can also create their own parser class just by inheritin gthe `FieldParser` class, but they have to follow build design pattern, like it is done in the existing parsers.  
 <pre>
 
@@ -18,9 +18,9 @@ The library will be updated in future to support more native data types and some
 
 </pre>
 ## Who will be benefited?  
+
 The philosophy behind making the repository available to community is to help everyone tackle a very un-rewarding (extremely messy at times) task of validating raw input data.  
-<pre>
-</pre>
+
 So any user who works with raw source data and wants to be absolutely sure about the data she/he is getting before moving forward, will be benefited from this library. Here are some use cases:  
 * ETL process (keep in mind data read is not part of the library)  
 * Data scraping and machine learning data collection  
@@ -35,11 +35,11 @@ So any user who works with raw source data and wants to be absolutely sure about
   
 ## What to expect?  
 `parseval` is built to **validate one value at a time**(not an entire file at a single go), which gives the user extreme flexibility. Theoretically, user can validate any data (structured, semi structured and unstructured) using the library.  
-<pre>
-</pre>
+
+
 As an add-on feature this library also has a built in `Parser` class which can handle following data collections  _TextIO()_, _list of json_ and _list of rows_, we will discuss about the usage in detail in later sections.  
-<pre>
-</pre>
+
+
 The library is also capable of validating _slice of data_, which makes it absolutely trivial to parse `fixed-width` rows. One `regex pattern check` API also comes as built-in feature.  
 <pre>
 
@@ -49,6 +49,7 @@ The library is also capable of validating _slice of data_, which makes it absolu
 </pre>
 ## How to use?  
 Now the fun part. We will first check the available features. Then we will go through the actual parsing & validation of atomic data. We will also see how the built in `parser` API can parse and validate entire data-collection.  
+
 <pre>
 
 </pre>
@@ -60,10 +61,9 @@ Current version comes with following six types of parsers:
 - `IntegerParser` - _the parser to handle `Integer` type data_  
 - `DatetimeParser` - _the parser to handle `Date` and `Timestamp` type data_  
 - `ConstantParser` - _the parser which always returns a specified constant value, mostly used in data-collection parsing_
-<pre>
-</pre>
+
 Each of these parsers comes with some common validations. Some parsers come with specific validations also. Following are all available validations.  
-|             | **FieldParser**    | **StringParser**   | **FloatParser**    | **IntegerParser**  | **DatetimeParser** | **ConstantParser** | **Remarks**                                                                     |
+|             | **FieldParser**    | **StringParser**   | **FloatParser**    | **IntegerParser**  | **DatetimeParser** | **ConstantParser** | **Remarks On Functionality**                                                                     |
 |-------------|--------------------|--------------------|--------------------|--------------------|--------------------|--------------------|---------------------------------------------------------------------------------|
 | not_null    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                | Checks if the input data is not null                                            |
 | value_set   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                | Checks if input data matches with any of the values of a provided list of value |
@@ -79,21 +79,18 @@ Apart from these APIs user can use `add_function` API of any parser to add their
 
 </pre>
 ### Atomic value parsing  
-<pre>
-</pre>
+
+
 **> Principle:** Now based on the data in hand, first choose a parser. Then apply the validation (`not_null`, `max_val` etc) as per requirements.
-<pre>
-</pre>
+
 **> Scenario:** Built a parser for string input data that is not null and starts with 'DEMO_' string.
-<pre>
-</pre>
+
 **> Solution:**
 The process contains two trivial steps,  
 1. Define the parser based on requirement  
 2. Build the parser
 3. Pass the value through the parser  
-<pre>
-</pre>
+
 First let's build the parser,
 ```
 >>> from parseval.parser import StringParser
@@ -101,15 +98,13 @@ First let's build the parser,
 ```
 - `StringParser()` part will initialize the parser,
 - `not_null()`, `regex_match()` are validators
-<pre>
-</pre>
+
 Then we will build the parser:
 ```
 >>> p_func = p_def.build()
 ```
 - `build()` API needs to be applied on each the to build the validation functions to be applied on the data.
-<pre>
-</pre>
+
 Now we will pass the input to the parser to get validated/parsed/converted data,
 ```
 >>> input_data = "DEMO_DATA"
@@ -148,21 +143,17 @@ Let's say user want's to check whether the input number is even or odd, if the n
 
 </pre>
 ### Parsing data collections (TextIO, List of rows or json)
-<pre>
-</pre>
+
 **> Principle:** Create an object of `parseval.Parser` class by providing expected structure of the data (we call it a schema) and call `parser` method of that object and pass the schema and data collection to get the parsed valid rows in return.
-<pre>
-</pre>
+
 **> Scenario:** Parse the data of a file containing 3 columns.
-<pre>
-</pre>
+
 **> Solution:**
 The process contains three simple steps,  
 1. Define a schema of parsers
 2. Create `Parser` object by passing the `schema`. There is a way to set error threshold using `stop_on_error` parameter while creating the object. Please check API documents. Moreover `row delimiter` must be provided at this stage only for delimited files. 
 3. Call `parse` method of that object and pass the data collection.
-<pre>
-</pre>
+
 First let's built the schema, schema structure must be `list of tuples`, tuples will hold the `column name` as first element and the parser definition as second element. The sequence of list should match the column list in a record. We will create one file to use as a source file also:
 ```
 >>> from parseval.parser import StringParser, IntegerParser,DatetimeParser, Parser
@@ -231,4 +222,4 @@ If the source data rows are not delimited like previous case, instead it is fixe
 </pre>
 ---
 ---
-_**That's all from my end. Hope you find the library useful in your daily data engineering. Please reach out for any queries or suggestion. Feel free to use and enrich the code. I am avaiable at saumalya75@gmail.com  and [linkedin.com/in/saumalya-sarkar-b3712817b](https://www.linkedin.com/in/saumalya-sarkar-b3712817b) .**_
+_**That's all from my end. Hope you find the library useful in your daily data engineering. Please reach out for any queries or suggestion. Feel free to use and enrich the code. I am always avaiable at saumalya75@gmail.com **_
