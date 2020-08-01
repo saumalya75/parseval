@@ -77,6 +77,7 @@ Each of these parsers comes with some common validations. Some parsers come with
 Apart from these APIs user can use `add_function` API of any parser to add their custom validation/conversion function, given that the function always returns the same data or processed data. We will one example related to that also.
 <pre>
 
+
 </pre>
 ### Atomic value parsing  
 
