@@ -14,6 +14,7 @@ Available APIs:
 > **Signature**: _not_null(default_value=None)_
 >
 > **Parameters**:
+>
 > * `default_value`: Default value for a column which should be not null
 <pre>
 </pre>
