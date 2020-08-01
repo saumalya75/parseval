@@ -5,8 +5,11 @@
 **Signature**: _FieldParser(start=0, end=0, quoted=0)_
 
 **Parameters**:
+
 - `start`: Start position of the data in row
+
 - `end`: End position of the data in row
+
 - `quoted`: Data quotation options - {0: Not Quoted, 1: Double Quoted, 2: Single Quoted}
 
 Available APIs:
