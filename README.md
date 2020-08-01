@@ -223,4 +223,4 @@ If the source data rows are not delimited like previous case, instead it is fixe
 </pre>
 ---
 ---
-_**That's all from my end. Hope you find the library useful in your daily data engineering. Please reach out for any queries or suggestion. Feel free to use and enrich the code. I am always avaiable at saumalya75@gmail.com **_
+**_That's all from my end. Hope you find the library useful in your daily data engineering. Please reach out for any queries or suggestion. Feel free to use and enrich the code. I am always avaiable at saumalya75@gmail.com and linkedin.com/in/saumalya-sarkar-b3712817b_**
