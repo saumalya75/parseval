@@ -61,6 +61,16 @@ Available APIs:
 >
 <pre>
 </pre>
+>
+> **Signature**: _add_func(f: function)_
+>
+> **Parameters**:
+>
+> - `f`: Custom function to be added to the parser
+>
+<pre>
+</pre>
+>
 ---
 
 ## StringParser:
@@ -143,6 +153,16 @@ Available APIs:
 >
 <pre>
 </pre>
+>
+> **Signature**: _add_func(f: function)_
+>
+> **Parameters**:
+>
+> - `f`: Custom function to be added to the parser
+>
+<pre>
+</pre>
+>
 ---
 
 ## FloatParser:
@@ -203,6 +223,18 @@ Available APIs:
 > - `lower_bound`: Minimum allowed value for the column
 > - `upper_bound`: Maximum allowed value for the column
 >
+<pre>
+</pre>
+>
+> **Signature**: _add_func(f: function)_
+>
+> **Parameters**:
+>
+> - `f`: Custom function to be added to the parser
+>
+<pre>
+</pre>
+>
 ---
 
 ## IntegerParser:
@@ -262,6 +294,15 @@ Available APIs:
 >
 > - `lower_bound`: Minimum allowed value for the column
 > - `upper_bound`: Maximum allowed value for the column
+>
+<pre>
+</pre>
+>
+> **Signature**: _add_func(f: function)_
+>
+> **Parameters**:
+>
+> - `f`: Custom function to be added to the parser
 >
 <pre>
 </pre>
@@ -336,6 +377,15 @@ Available APIs:
 <pre>
 </pre>
 >
+> **Signature**: _add_func(f: function)_
+>
+> **Parameters**:
+>
+> - `f`: Custom function to be added to the parser
+>
+<pre>
+</pre>
+>
 ---
 ## ConstantParser:
 
@@ -345,6 +395,43 @@ Available APIs:
 
 - `value`: The parser will always return this value irrespective of the input data and called methods.
 
+---
+<pre>
+
+
+
+</pre>
+
+## Parser:
+
+**Signature**: _Parser(schema: typing.List[typing.Tuple] = [], input_row_format: str = "delimited", input_row_sep: str = "|", parsed_row_format: str = "delimited", parsed_row_sep: str = None, stop_on_error: int = 0)_
+
+**Parameters**:
+
+- `schema`: Parser schema for the row.
+
+- `input_row_format`: Type of row, for json row provide `json` and for delimited rows provide `delimited`.
+
+- `input_row_sep`: Delimiter of input row, not required for `input_row_format = "json"` scenarios.
+
+- `parsed_row_format`: Type of output row, if output row is required in json format then provide `json` and if delimited rows are required provide `delimited`. Note: "fixed-width" output is not supported.
+
+- `parsed_row_sep`: Delimiter of output row, not required for `parsed_row_format = "json"` scenarios.
+
+- `stop_on_error`:  When `stop_on_error` value is set to **0**, the process will stop on encountering an validation error. When `stop_on_error` value is set to **any negative number**, the process will skip all erroneous rows and return only valid rows and when `stop_on_error` value is set to any **specific positive number**, the process will allow those many erroneous rows, if erroneous rows exceeds that number, the process will fail.
+
+
+Available APIs:
+
+> **Signature**: _parse(data: typing.Union[typing.List[typing.Union[str, typing.Dict]], typing.TextIO])_
+>
+> **Parameters**:
+>
+> - `data`: Input data set
+>
+<pre>
+</pre>
+>
 ---
 <pre>
 
