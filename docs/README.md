@@ -25,7 +25,6 @@ Available APIs:
 > **Parameters**:
 >
 > - `values`: Set of valid values for this column
->
 > - `nullable`: If set to `True` then `empty string` and `None` will be treated as valid value, along with the provided value list
 >
 <pre>
@@ -54,7 +53,6 @@ Available APIs:
 > **Parameters**:
 >
 > - `lower_bound`: Minimum allowed value for the column
->
 > - `upper_bound`: Maximum allowed value for the column
 >
 <pre>
