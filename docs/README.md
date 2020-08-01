@@ -62,6 +62,7 @@ Available APIs:
 <pre>
 </pre>
 ---
+
 ## StringParser:
 
 **Signature**: _StringParser(start: int = 0, end: int = 0, quoted: int = 0)_
@@ -85,6 +86,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _value_set(values: typing.List[str], nullable: bool = True)_
 >
 > **Parameters**:
@@ -94,6 +96,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _max_value(value: str)_
 >
 > **Parameters**:
@@ -102,6 +105,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _min_value(value: str)_
 >
 > **Parameters**:
@@ -110,6 +114,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _regex_match(pattern: str, nullable=True)_
 >
 > **Parameters**:
@@ -119,6 +124,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _change_case(case_type: str = 'S')_
 >
 > **Parameters**:
@@ -127,6 +133,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _range(lower_bound: str, upper_bound: str)_
 >
 > **Parameters**:
@@ -137,6 +144,7 @@ Available APIs:
 <pre>
 </pre>
 ---
+
 ## FloatParser:
 
 **Signature**: _FloatParser(start: int = 0, end: int = 0, quoted: int = 0)_
@@ -159,6 +167,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _value_set(values: typing.List[float], nullable: bool = True)_
 >
 > **Parameters**:
@@ -168,6 +177,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _max_value(value: float)_
 >
 > **Parameters**:
@@ -176,6 +186,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _min_value(value: float)_
 >
 > **Parameters**:
@@ -184,6 +195,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _range(lower_bound: float, upper_bound: float)_
 >
 > **Parameters**:
@@ -192,6 +204,7 @@ Available APIs:
 > - `upper_bound`: Maximum allowed value for the column
 >
 ---
+
 ## IntegerParser:
 
 **Signature**: _IntegerParser(start: int = 0, end: int = 0, quoted: int = 0)_
@@ -214,6 +227,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _value_set(values: typing.List[int], nullable: bool = True)_
 >
 > **Parameters**:
@@ -223,6 +237,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _max_value(value: int)_
 >
 > **Parameters**:
@@ -231,6 +246,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _min_value(value: int)_
 >
 > **Parameters**:
@@ -239,6 +255,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _range(lower_bound: int, upper_bound: int)_
 >
 > **Parameters**:
@@ -248,7 +265,9 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 ---
+
 ## DatetimeParser:
 
 **Signature**: _DatetimeParser(start: int = 0, end: int = 0, formats: typing.List =['%Y%m%d', '%Y%md%H%M%S'], quoted: int = 0)_
@@ -274,6 +293,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _value_set(values: typing.List[typing.Union[str, datetime.datetime]], format='%Y-%m-%d %H:%M:%S', nullable: bool = True)_
 >
 > **Parameters**:
@@ -284,6 +304,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _max_value(value: typing.Union[str, datetime.datetime], format: str = '%Y-%m-%d %H:%M:%S')_
 >
 > **Parameters**:
@@ -293,6 +314,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _min_value(value: typing.Union[str, datetime.datetime], format: str = '%Y-%m-%d %H:%M:%S')_
 >
 > **Parameters**:
@@ -302,6 +324,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _range(lower_bound: typing.Union[str, datetime.datetime], upper_bound: typing.Union[str, datetime.datetime], format='%Y-%m-%d %H:%M:%S')_
 >
 > **Parameters**:
@@ -309,6 +332,9 @@ Available APIs:
 > - `lower_bound`: Minimum allowed value for the column
 > - `upper_bound`: Maximum allowed value for the column
 > - `format`: Provided allowed value's format, if a datetime object is provided as allowed value, then this parameter has no effect.
+>
+<pre>
+</pre>
 >
 ---
 ## ConstantParser:
@@ -326,6 +352,8 @@ Available APIs:
 
 </pre>
 
-_For any further queries reach out to **saumalya75@gmail.com** or **http://linkedin.com/in/saumalya-sarkar-b3712817b**_
+_For detailed installation and usage information please check **https://github.com/saumalya75/parseval** here._
+ 
+_For any further queries reach out to **saumalya75@gmail.com** or **http://linkedin.com/in/saumalya-sarkar-b3712817b** ._
 
 ---
