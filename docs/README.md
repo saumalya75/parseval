@@ -16,33 +16,45 @@ Available APIs:
 > **Parameters**:
 >
 > * `default_value`: Default value for a column which should be not null
+>
 <pre>
 </pre>
 > **Signature**: _value_set(values, nullable=True)_
 >
 > **Parameters**:
+>
 > - `values`: Set of valid values for this column
+>
 > - `nullable`: If set to `True` then `empty string` and `None` will be treated as valid value, along with the provided value list
-
-
+>
+<pre>
+</pre>
 > **Signature**: _max_value(value)_
 >
 > **Parameters**:
+>
 > - `values`: Maximum allowed value for the column
-
-
+>
+<pre>
+</pre>
 > **Signature**: _min_value(value)_
 >
 > **Parameters**:
+>
 > - `values`: Minimum allowed value for the column
-
-
+>
+<pre>
+</pre>
 > **Signature**: _range(lower_bound, upper_bound)_
 >
 > **Parameters**:
+>
 > - `lower_bound`: Minimum allowed value for the column
+>
 > - `upper_bound`: Maximum allowed value for the column
-
+>
+<pre>
+</pre>
 ---
 ## StringParser:
 **Signature**: _StringParser(start=0, end=0, quoted=0)_
