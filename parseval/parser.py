@@ -86,8 +86,8 @@ class FieldParser:
         :param f: any
             Although this parameter is typed as any, but it accepts a closure
              and adds it to the list of closures for this object.
-        :return: bool
-            True
+        :return: FieldParser
+            self
         """
         try:
             self._funcs.append(f)
@@ -96,7 +96,7 @@ class FieldParser:
             traceback.print_exc(file=sys.stdout)
             print('~' * 100)
             raise UnexpectedSystemException()
-        return True
+        return self
 
     def not_null(self, default_value: any = None):
         """
@@ -129,8 +129,7 @@ class FieldParser:
                 print('~' * 100)
                 raise UnexpectedParsingException()
 
-        self.add_func(null_check)
-        return self
+        return self.add_func(null_check)
 
     def value_set(self, values: typing.List, nullable: bool = True):
         """
@@ -167,8 +166,7 @@ class FieldParser:
                 print('~' * 100)
                 raise UnexpectedParsingException()
 
-        self.add_func(valid_value_check)
-        return self
+        return self.add_func(valid_value_check)
 
     def max_value(self, value: any):
         """
@@ -200,8 +198,7 @@ class FieldParser:
                 print('~' * 100)
                 raise UnexpectedParsingException()
 
-        self.add_func(valid_value_check)
-        return self
+        return self.add_func(valid_value_check)
 
     def min_value(self, value: any):
         """
@@ -233,8 +230,7 @@ class FieldParser:
                 print('~' * 100)
                 raise UnexpectedParsingException()
 
-        self.add_func(valid_value_check)
-        return self
+        return self.add_func(valid_value_check)
 
 
 class StringParser(FieldParser):
@@ -288,8 +284,7 @@ class StringParser(FieldParser):
                 print('~' * 100)
                 raise UnexpectedParsingException()
 
-        self.add_func(pattern_match)
-        return self
+        return self.add_func(pattern_match)
 
     def change_case(self, case_type: str = 'S'):
         """
@@ -323,8 +318,7 @@ class StringParser(FieldParser):
                 print('~' * 100)
                 raise UnexpectedParsingException()
 
-        self.add_func(change_case)
-        return self
+        return self.add_func(change_case)
 
     def not_null(self, default_value: any = None, allow_white_space: bool = False):
         """
@@ -362,8 +356,7 @@ class StringParser(FieldParser):
                 print('~' * 100)
                 raise UnexpectedParsingException()
 
-        self.add_func(null_check)
-        return self
+        return self.add_func(null_check)
 
 
 class FloatParser(FieldParser):
@@ -549,8 +542,7 @@ class DatetimeParser(FieldParser):
                 print('~' * 100)
                 raise UnexpectedParsingException()
 
-        self.add_func(null_check)
-        return self
+        return self.add_func(null_check)
 
     def convert(self, format: str = '%Y-%m-%d'):
         """
@@ -592,8 +584,7 @@ class DatetimeParser(FieldParser):
                                          .format(data, format)
                                          )
 
-        self.add_func(str_from_date)
-        return self
+        return self.add_func(str_from_date)
 
     def max_value(self, value: typing.Union[str, datetime.datetime], format: str = '%Y-%m-%d %H:%M:%S'):
         """
@@ -650,8 +641,7 @@ class DatetimeParser(FieldParser):
                 print('~' * 100)
                 raise UnexpectedParsingException()
 
-        self.add_func(valid_value_check)
-        return self
+        return self.add_func(valid_value_check)
 
     def min_value(self, value: typing.Union[str, datetime.datetime], format: str = '%Y-%m-%d %H:%M:%S'):
         """
@@ -708,8 +698,7 @@ class DatetimeParser(FieldParser):
                 print('~' * 100)
                 raise UnexpectedParsingException()
 
-        self.add_func(valid_value_check)
-        return self
+        return self.add_func(valid_value_check)
 
 
 class ConstantParser(FieldParser):
