@@ -1,16 +1,19 @@
 # `parseval`: A pythonic data validator 
 **_parseval_** is a data validation tool for python. It provides numerous API to parse and validate data for all native data-types. it handles data on atomic level and focuses on validation part primarily.
-
-
+<pre>
+</pre>
 Currently `parseval` supports following data types:  
 * String  
-* Integer  
+* Integer /Long
 * Numeric/Float  
 * Date  
 * DateTime  
-
-
+<pre>
+</pre>
 The library will be updated in future to support more native data types and some complex types. Users can also create their own parser class just by inheritin gthe `FieldParser` class, but they have to follow build design pattern, like it is done in the existing parsers.  
+<pre>
+</pre>
+>**API reference:**  [https://parseval.readthedocs.io/en/latest/](https://parseval.readthedocs.io/en/latest/)
 <pre>
 
 
@@ -37,7 +40,7 @@ So any user who works with raw source data and wants to be absolutely sure about
 `parseval` is built to **validate one value at a time**(not an entire file at a single go), which gives the user extreme flexibility. Theoretically, user can validate any data (structured, semi structured and unstructured) using the library.  
 
 
-As an add-on feature this library also has a built in `Parser` class which can handle following data collections  _TextIO()_, _list of json_ and _list of rows_, we will discuss about the usage in detail in later sections.  
+As an add-on feature this library also has a built in `Parser` class which can handle following data collections  _**TextIO**_, _**list of json**_ and _**list of rows**_, we will discuss about the usage in detail in later sections.  
 
 
 The library is also capable of validating _slice of data_, which makes it absolutely trivial to parse `fixed-width` rows. One `regex pattern check` API also comes as built-in feature.  
@@ -63,7 +66,7 @@ Current version comes with following six types of parsers:
 - `ConstantParser` - _the parser which always returns a specified constant value, mostly used in data-collection parsing_
 
 Each of these parsers comes with some common validations. Some parsers come with specific validations also. Following are all available validations.  
-|             | **FieldParser**    | **StringParser**   | **FloatParser**    | **IntegerParser**  | **DatetimeParser** | **ConstantParser** | **Remarks On Functionality**                                                                     |
+|             | **FieldParser**    | **StringParser**   | **FloatParser**    | **IntegerParser**  | **DatetimeParser** | **ConstantParser** | **Remarks**                                                                     |
 |-------------|--------------------|--------------------|--------------------|--------------------|--------------------|--------------------|---------------------------------------------------------------------------------|
 | not_null    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                | Checks if the input data is not null                                            |
 | value_set   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                | Checks if input data matches with any of the values of a provided list of value |
@@ -74,9 +77,8 @@ Each of these parsers comes with some common validations. Some parsers come with
 | change_case | :x:                | :heavy_check_mark: | :x:                | :x:                | :x:                | :x:                | Returns data with altered case, _Not a validator_                               |
 | convert     | :x:                | :x:                | :x:                | :x:                | :heavy_check_mark: | :x:                | Returns data in desired format, _Not a validator_                               |
 
-Apart from these APIs user can use `add_function` API of any parser to add their custom validation/conversion function, given that the function always returns the same data or processed data. We will one example related to that also.
+Apart from these APIs user can use `add_function` API of any parser to add their custom validation/conversion function, given that the function always returns the same data or processed data. We will see one example related to that also.
 <pre>
-
 
 </pre>
 ### Atomic value parsing  
@@ -167,7 +169,7 @@ First let's built the schema, schema structure must be `list of tuples`, tuples 
 	('dob`, DatetimeParser(formats='%Y%m%d').convert('%Y/%m/%d'))
 ]
 ```
-Now, we will create an object of `Parser` class. Notice, apart from `schema` we are providing some more parameters, to know the functionality of those parameters in depth, please visit the library documentation.
+Now, we will create an object of `Parser` class. Notice, apart from `schema` we are providing some more parameters, to know the functionality of those parameters in depth, please visit the API reference link mentioned above.
 ```
 >>> parser_obj = Parser(schema=schema,
 		input_row_format = "delimited",
@@ -223,4 +225,4 @@ If the source data rows are not delimited like previous case, instead it is fixe
 </pre>
 ---
 ---
-_That's all from my end. Hope you find the library useful in your daily data engineering. Please reach out for any queries or suggestion. Feel free to use and enrich the code. I am always avaiable at **saumalya75@gmail.com** and **http://linkedin.com/in/saumalya-sarkar-b3712817b**_
+_**That's all from my end. Hope you find the library useful in your daily data engineering. Please reach out for any queries or suggestion. Feel free to use and enrich the code. I am always avaiable at saumalya75@gmail.com and **linkedin.com/in/saumalya-sarkar-b3712817b **_
