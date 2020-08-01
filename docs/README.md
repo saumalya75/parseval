@@ -15,10 +15,11 @@ Available APIs:
 >
 > **Parameters**:
 >
-> * `default_value`: Default value for a column which should be not null
+> - `default_value`: Default value for a column which should be not null
 >
 <pre>
 </pre>
+>
 > **Signature**: _value_set(values, nullable=True)_
 >
 > **Parameters**:
@@ -29,6 +30,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _max_value(value)_
 >
 > **Parameters**:
@@ -37,6 +39,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _min_value(value)_
 >
 > **Parameters**:
@@ -45,6 +48,7 @@ Available APIs:
 >
 <pre>
 </pre>
+>
 > **Signature**: _range(lower_bound, upper_bound)_
 >
 > **Parameters**:
