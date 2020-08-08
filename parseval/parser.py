@@ -37,16 +37,16 @@ class FieldParser:
     """
     Base class for all parsers apart from Constant.
     """
+    TYPE = str
 
     def __init__(self,
                  start: int = 0,
                  end: int = 0,
-                 quoted: int = 0
+                 quoted: int = 0,
+                 enforce_type: bool = True
                  ):
         """
         Field parser constructor.
-        :param quoted: int
-            Quoted code. {0: Not quoted, 1: Double quoted, 2: Single Quoted}
         :param start:
             Use this parameter to specify starting position of the value in the provided data.
             Fixed width files can be parsed using this parameter along with `end` parameter.
@@ -55,16 +55,49 @@ class FieldParser:
             Use this parameter to specify ending position of the value in the provided data.
             Fixed width files can be parsed using this parameter along with `start` parameter.
             Using this parameter along with `start` parameter data snipping is also possible.
+        :param quoted: int
+            Quoted code. {0: Not quoted, 1: Double quoted, 2: Single Quoted}
+        :param enforce_type:
+            If set to True, the type return value of this parser will be the type of parser,
+            e.g. `str` for `StringParser`, `datetime.datetiem` for `DatetiemParser` etc.
+            If set to False, type conversion will not happen, whatever type vale was provided,
+            will be returned.
+            By default this parameter is set to True.
         """
-        self.dtype = str
         self._nullable: bool = False
         self._funcs: typing.List = []
+        self.enforce_type: bool = enforce_type
+
         if start and end:
-            self.add_func(lambda s: s[start - 1:end])
+            self.add_func(lambda s: str(s)[start - 1:end])
         if quoted == 1:
             self.add_func(lambda s: s.lstrip('"').rstrip('"'))
         elif quoted == 2:
             self.add_func(lambda s: s.lstrip("'").rstrip("'"))
+
+        def type_casting(data: any):
+            """
+            Closure to cast the data to integer
+            :param data: any
+                Column value
+            :return: any
+                Parsed column value
+            """
+            try:
+                if data:
+                    if self.TYPE:
+                        if self.enforce_type:
+                            data = self.TYPE(data)
+                        else:
+                            assert self.TYPE(data)
+                return data
+            except Exception:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise IntegerParsingException("Column value - {} could not be casted into Integer.".format(data))
+
+        self.add_func(type_casting)
 
     def build(self):
         """
@@ -109,10 +142,10 @@ class FieldParser:
         :return: FieldParser
             self
         """
-        if type(default_value) != self.dtype:
+        if type(default_value) != self.TYPE:
             raise UnsupportedDatatypeException(f"{type(default_value)} type data can not be used as default value of"
-                                               f" {self.dtype} type column. Please provide default value of"
-                                               f" {self.dtype} type.")
+                                               f" {self.TYPE} type column. Please provide default value of"
+                                               f" {self.TYPE} type.")
 
         def null_check(data: any):
             """
@@ -125,7 +158,10 @@ class FieldParser:
             try:
                 if not data:
                     if default_value is not None:
-                        return default_value
+                        if self.enforce_type:
+                            return self.TYPE(default_value)
+                        else:
+                            return default_value
                     else:
                         raise NullValueInNotNullFieldException()
                 else:
@@ -151,10 +187,13 @@ class FieldParser:
             self
         """
         dtypes = set(type(v) for v in values)
-        if len(dtypes) > 1 or list(dtypes)[0] != self.dtype:
+        if len(dtypes) > 1 or list(dtypes)[0] != self.TYPE:
             raise UnsupportedDatatypeException(f"Provided valid values are not fit for"
-                                               f" {self.dtype} type column. Please provide valid values of"
-                                               f" {self.dtype} type.")
+                                               f" {self.TYPE} type column. Please provide valid values of"
+                                               f" {self.TYPE} type.")
+        if self.enforce_type:
+            values = [self.TYPE(value) for value in values]
+
         if nullable:
             values.extend(['', None])
 
@@ -188,10 +227,12 @@ class FieldParser:
         :return: FieldParser
             self
         """
-        if type(value) != self.dtype:
+        if type(value) != self.TYPE:
             raise UnsupportedDatatypeException(f"{type(value)} type data can not be used as maximum value of"
-                                               f" {self.dtype} type column. Please provide maximum value of"
-                                               f" {self.dtype} type.")
+                                               f" {self.TYPE} type column. Please provide maximum value of"
+                                               f" {self.TYPE} type.")
+        if self.enforce_type:
+            value = self.TYPE(value)
 
         def valid_value_check(data: any):
             """
@@ -224,10 +265,13 @@ class FieldParser:
         :return: FieldParser
             self
         """
-        if type(value) != self.dtype:
+        if type(value) != self.TYPE:
             raise UnsupportedDatatypeException(f"{type(value)} type data can not be used as minimum value of"
-                                               f" {self.dtype} type column. Please provide minimum value of"
-                                               f" {self.dtype} type.")
+                                               f" {self.TYPE} type column. Please provide minimum value of"
+                                               f" {self.TYPE} type.")
+
+        if self.enforce_type:
+            value = self.TYPE(value)
 
         def valid_value_check(data: any):
             """
@@ -277,13 +321,34 @@ class StringParser(FieldParser):
     Overridden features:
         - not_null (to handle prolonged white spaces)
     """
+    TYPE = str
 
     def __init__(self, *args, **kwargs):
         """
             Handing over object initialization to parent class.
         """
         super().__init__(*args, **kwargs)
-        self.dtype = str
+
+        def string_casting(data: any):
+            """
+            Closure to cast the data to string
+            :param data: any
+                Column value
+            :return: str
+                Parsed column value
+            """
+            try:
+                if data:
+                    return str(data)
+                else:
+                    return data
+            except Exception:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise FloatParsingException("Column value - {} could not be casted into String.".format(data))
+
+        self.add_func(string_casting)
 
     def regex_match(self, pattern: str, nullable: bool = True):
         """
@@ -377,10 +442,13 @@ class StringParser(FieldParser):
                 Column value or default value
             """
             try:
-                data = data if allow_white_space else data.strip()
+                data = data if allow_white_space else type(data)(str(data).strip())
                 if not data:
                     if default_value is not None:
-                        return default_value
+                        if self.enforce_type:
+                            return str(default_value)
+                        else:
+                            return default_value
                     else:
                         raise NullValueInNotNullFieldException()
                 else:
@@ -403,34 +471,13 @@ class FloatParser(FieldParser):
     Overridden features:
         None
     """
+    TYPE = float
 
     def __init__(self, *args, **kwargs):
         """
             Handing over object initialization to parent class.
         """
         super().__init__(*args, **kwargs)
-        self.dtype = float
-
-        def float_casting(data: str):
-            """
-            Closure to cast the data to float
-            :param data: str
-                Column value
-            :return: int
-                Parsed column value
-            """
-            try:
-                if data:
-                    return float(data)
-                else:
-                    return data
-            except Exception:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
-                raise FloatParsingException("Column value - {} could not be casted into Float.".format(data))
-
-        self.add_func(float_casting)
 
 
 class IntegerParser(FieldParser):
@@ -442,34 +489,13 @@ class IntegerParser(FieldParser):
     Overridden features:
         None
     """
+    TYPE = int
 
     def __init__(self, *args, **kwargs):
         """
             Handing over object initialization to parent class.
         """
         super().__init__(*args, **kwargs)
-        self.dtype = int
-
-        def integer_casting(data: str):
-            """
-            Closure to cast the data to integer
-            :param data: str
-                Column value
-            :return: int
-                Parsed column value
-            """
-            try:
-                if data:
-                    return int(data)
-                else:
-                    return data
-            except Exception:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
-                raise IntegerParsingException("Column value - {} could not be casted into Integer.".format(data))
-
-        self.add_func(integer_casting)
 
 
 class DatetimeParser(FieldParser):
@@ -484,44 +510,74 @@ class DatetimeParser(FieldParser):
         - maximum value check
         - minimum value check
     """
+    TYPE = False
 
     def __init__(self,
                  start: int = 0,
                  end: int = 0,
                  formats: typing.List = ['%Y%m%d', '%Y%md%H%M%S'],
-                 quoted: int = 0
+                 quoted: int = 0,
+                 enforce_type: bool = True
                  ):
         """
-            Initiating DateTime Parser object with a little help of parents.
+        Initiating DateTime Parser object with a little help of parents.
+        :param start:
+            Use this parameter to specify starting position of the value in the provided data.
+            Fixed width files can be parsed using this parameter along with `end` parameter.
+            Using this parameter along with `end` parameter data snipping is also possible.
+        :param end:
+            Use this parameter to specify ending position of the value in the provided data.
+            Fixed width files can be parsed using this parameter along with `start` parameter.
+            Using this parameter along with `start` parameter data snipping is also possible.
+        :param formats:
+            If input data is of type `str` then this parameter accepts the allowed formats list.
+            If inout data is of type `datetime.datetime` then this parameter is obsolete.
+        :param quoted: int
+            Quoted code. {0: Not quoted, 1: Double quoted, 2: Single Quoted}
+        :param enforce_type:
+            If set to True, the type return value of this parser will be the type of parser,
+            e.g. `str` for `StringParser`, `datetime.datetiem` for `DatetiemParser` etc.
+            If set to False, type conversion will not happen, whatever type vale was provided,
+            will be returned.
+            By default this parameter is set to True.
         """
         self._formats = formats
-        super().__init__(start=start, end=end, quoted=quoted)
+        super().__init__(start=start, end=end, quoted=quoted, enforce_type=False)
+        self.enforce_type: bool = enforce_type
 
-        def format_checker(data: str):
+        def format_checker(data: typing.Union[str, datetime.datetime]):
             """
             Closure to read and format date/datetime data. This closure validates the data format,
             as well as returns a datetime object. Please use `convert` closure to reformat data,
             or to store it in string format.
-            :param data: str
+            :param data: typing.Union[str, datetime.datetime]
                 Column value
             :return: str
                 Column value
             """
-            if not data:
+            if not data or type(data) == datetime.datetime:
                 return data
             for f in self._formats:
                 try:
-                    datetime.datetime.strptime(data, f)
-                    return data
+                    if self.enforce_type:
+                        data = datetime.datetime.strptime(str(data), f)
+                        break
+                    else:
+                        assert datetime.datetime.strptime(str(data), f)
+                        break
                 except Exception:
                     pass
-            raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
-                                           .format(data, self._formats)
-                                           )
+            else:
+                raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
+                                               .format(data, self._formats)
+                                               )
+            return data
 
         self.add_func(format_checker)
 
-    def not_null(self, default_value: typing.Union[str, datetime.datetime] = None, format: str = '%Y-%m-%d %H:%M:%S'):
+    def not_null(self,
+                 default_value: typing.Union[str, datetime.datetime] = None,
+                 format: str = '%Y-%m-%d %H:%M:%S'):
         """
         Building not null check closure.
         :param default_value: typing.Union[str, datetime.datetime]
@@ -532,9 +588,12 @@ class DatetimeParser(FieldParser):
             self
         """
         if default_value:
-            if type(default_value) == str:
+            if type(default_value) != datetime.datetime:
                 try:
-                    datetime.datetime.strptime(default_value, format)
+                    if self.enforce_type:
+                        default_value = datetime.datetime.strptime(str(default_value), format)
+                    else:
+                        datetime.datetime.strptime(str(default_value), format)
                 except Exception:
                     print('~' * 100)
                     traceback.print_exc(file=sys.stdout)
@@ -542,19 +601,6 @@ class DatetimeParser(FieldParser):
                     raise UnexpectedParsingException("Provided default value - '{}' is not of '{}' format."
                                                      .format(default_value, format)
                                                      )
-            else:
-                try:
-                    default_value = datetime.datetime.strftime(default_value, format)
-                except Exception:
-                    print('~' * 100)
-                    traceback.print_exc(file=sys.stdout)
-                    print('~' * 100)
-                    raise UnexpectedParsingException(
-                        "Provided default value - '{}' could not be casted into '{}' format.".format(
-                            default_value,
-                            format
-                        )
-                    )
             self._formats += [format]
 
         def null_check(data: any):
@@ -591,7 +637,7 @@ class DatetimeParser(FieldParser):
         """
         self._formats += [format]
 
-        def str_from_date(data: str):
+        def str_from_date(data: any):
             """
             Format conversion closure.
             :param data: str
@@ -602,17 +648,18 @@ class DatetimeParser(FieldParser):
             try:
                 if not data:
                     return data
-                for f in self._formats:
-                    try:
-                        pd = datetime.datetime.strptime(data, f)
-                        break
-                    except Exception:
-                        pass
-                else:
-                    raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
-                                                   .format(data, self._formats)
-                                                   )
-                return datetime.datetime.strftime(pd, format)
+                if type(data) != datetime.datetime:
+                    for f in self._formats:
+                        try:
+                            data = datetime.datetime.strptime(str(data), f)
+                            break
+                        except Exception:
+                            pass
+                    else:
+                        raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
+                                                       .format(data, self._formats)
+                                                       )
+                return datetime.datetime.strftime(data, format)
             except Exception as e:
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
@@ -623,7 +670,9 @@ class DatetimeParser(FieldParser):
 
         return self.add_func(str_from_date)
 
-    def max_value(self, value: typing.Union[str, datetime.datetime], format: str = '%Y-%m-%d %H:%M:%S'):
+    def max_value(self,
+                  value: typing.Union[str, datetime.datetime],
+                  format: str = '%Y-%m-%d %H:%M:%S'):
         """
         Building maximum value check closure.
         :param value: typing.Union[str, datetime.datetime]
@@ -633,9 +682,9 @@ class DatetimeParser(FieldParser):
         :return: DatetimeParser
             self
         """
-        if type(value) == str:
+        if type(value) != datetime.datetime:
             try:
-                max_val = datetime.datetime.strptime(value, format)
+                max_val = datetime.datetime.strptime(str(value), format)
             except Exception:
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
@@ -657,16 +706,21 @@ class DatetimeParser(FieldParser):
             try:
                 if not data:
                     return data
-                for f in self._formats:
-                    try:
-                        pd = datetime.datetime.strptime(data, f)
-                        break
-                    except Exception:
-                        pass
+                if type(data) != datetime.datetime:
+                    for f in self._formats:
+                        try:
+                            pd = datetime.datetime.strptime(str(data), f)
+                            break
+                        except Exception:
+                            pass
+                    else:
+                        raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
+                                                       .format(data, self._formats)
+                                                       )
                 else:
-                    raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
-                                                   .format(data, self._formats)
-                                                   )
+                    pd = data
+                print(data, type(data))
+
                 if pd > max_val:
                     raise MaximumValueConstraintException(
                         "Column value - '{}' is higher than maximum allowed value - {}.".format(data, value)
@@ -680,7 +734,9 @@ class DatetimeParser(FieldParser):
 
         return self.add_func(valid_value_check)
 
-    def min_value(self, value: typing.Union[str, datetime.datetime], format: str = '%Y-%m-%d %H:%M:%S'):
+    def min_value(self,
+                  value: typing.Union[str, datetime.datetime],
+                  format: str = '%Y-%m-%d %H:%M:%S'):
         """
         Building minimum value check closure.
         :param value: typing.Union[str, datetime.datetime]
@@ -690,9 +746,9 @@ class DatetimeParser(FieldParser):
         :return: DatetimeParser
             self
         """
-        if type(value) == str:
+        if type(value) != datetime.datetime:
             try:
-                min_val = datetime.datetime.strptime(value, format)
+                min_val = datetime.datetime.strptime(str(value), format)
             except Exception:
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
@@ -714,16 +770,20 @@ class DatetimeParser(FieldParser):
             try:
                 if not data:
                     return data
-                for f in self._formats:
-                    try:
-                        pd = datetime.datetime.strptime(data, f)
-                        break
-                    except Exception:
-                        pass
+                if type(data) != datetime.datetime:
+                    for f in self._formats:
+                        try:
+                            pd = datetime.datetime.strptime(str(data), f)
+                            break
+                        except Exception:
+                            pass
+                    else:
+                        raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
+                                                       .format(data, self._formats)
+                                                       )
                 else:
-                    raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
-                                                   .format(data, self._formats)
-                                                   )
+                    pd = data
+
                 if pd < min_val:
                     raise MinimumValueConstraintException(
                         "Column value - '{}' is lower than minimum allowed value - {}.".format(data, value)
@@ -761,7 +821,7 @@ class DatetimeParser(FieldParser):
                   values: typing.List[typing.Union[str, datetime.datetime]],
                   format: str = '%Y-%m-%d %H:%M:%S',
                   nullable: bool = True
-        ):
+                  ):
         """
         Building valid value check closure.
         :param values: typing.List[typing.Union[str, datetime.datetime]]
@@ -778,9 +838,9 @@ class DatetimeParser(FieldParser):
         valid_values = []
         if values:
             for value in values:
-                if type(value) == str:
+                if type(value) != datetime.datetime:
                     try:
-                        valid_values.append(datetime.datetime.strptime(value, format))
+                        valid_values.append(datetime.datetime.strptime(str(value), format))
                     except Exception:
                         print('~' * 100)
                         traceback.print_exc(file=sys.stdout)
@@ -805,16 +865,17 @@ class DatetimeParser(FieldParser):
             try:
                 if not data:
                     return data
-                for f in self._formats:
-                    try:
-                        pd = datetime.datetime.strptime(data, f)
-                        break
-                    except Exception:
-                        pass
-                else:
-                    raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
-                                                   .format(data, self._formats)
-                                                   )
+                if type(data) != datetime.datetime:
+                    for f in self._formats:
+                        try:
+                            pd = datetime.datetime.strptime(str(data), f)
+                            break
+                        except Exception:
+                            pass
+                    else:
+                        raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
+                                                       .format(data, self._formats)
+                                                       )
                 if pd not in valid_values:
                     raise ValidValueCheckException(
                         "Provided value - '{}' is not part of valid value list - {}.".format(data, values))
