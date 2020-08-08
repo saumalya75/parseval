@@ -331,7 +331,6 @@ Available APIs:
 
 - `enforce_type`: Type conversion control - {True:  Output data type will be `int`, False: Datatype of input will be preserved}. By-default it is set ot `True`.
 
->
 ---
 
 ## DatetimeParser:
