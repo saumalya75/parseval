@@ -317,6 +317,23 @@ Available APIs:
 >
 ---
 
+## BooleanParser:
+
+**Signature**: _BooleanParser(start: int = 0, end: int = 0, quoted: int = 0, enforce_type: bool = True)_
+
+**Parameters**:
+
+- `start`: Start position for the column in the row
+
+- `end`: End position for the column in the row
+
+- `quoted`: Data quotation options - {0: Not Quoted, 1: Double Quoted, 2: Single Quoted}
+
+- `enforce_type`: Type conversion control - {True:  Output data type will be `int`, False: Datatype of input will be preserved}. By-default it is set ot `True`.
+
+>
+---
+
 ## DatetimeParser:
 
 **Signature**: _DatetimeParser(start: int = 0, end: int = 0, formats: typing.List =['%Y%m%d', '%Y%md%H%M%S'], quoted: int = 0, enforce_type: bool = True)_

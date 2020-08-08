@@ -17,6 +17,7 @@ try:
         RegexMatchException, \
         IntegerParsingException, \
         FloatParsingException, \
+        BooleanParsingException, \
         DateTimeParsingException
 except ImportError:
     from exceptions import UnexpectedSystemException, \
@@ -30,6 +31,7 @@ except ImportError:
         RegexMatchException, \
         IntegerParsingException, \
         FloatParsingException, \
+        BooleanParsingException, \
         DateTimeParsingException
 
 
@@ -85,7 +87,7 @@ class FieldParser:
             """
             try:
                 if data:
-                    if self.TYPE:
+                    if self.TYPE and self.TYPE != bool:
                         if self.enforce_type:
                             data = self.TYPE(data)
                         else:
@@ -467,7 +469,7 @@ class FloatParser(FieldParser):
     Parser class for float columns.
     Inherits from `FieldParser` class.
     Float specific features:
-        - float_casting
+        None
     Overridden features:
         None
     """
@@ -485,7 +487,7 @@ class IntegerParser(FieldParser):
     Parser class for integer columns.
     Inherits from `FieldParser` class.
     Integer specific features:
-        - integer_casting
+        None
     Overridden features:
         None
     """
@@ -496,6 +498,63 @@ class IntegerParser(FieldParser):
             Handing over object initialization to parent class.
         """
         super().__init__(*args, **kwargs)
+
+
+class BooleanParser(FieldParser):
+    """
+    Parser class for boolean columns.
+    Inherits from `FieldParser` class.
+    Integer specific features:
+        None
+    Overridden features:
+        None
+    """
+    TYPE = bool
+
+    def __init__(self, *args, **kwargs):
+        """
+            Handing over object initialization to parent class.
+        """
+        super().__init__(*args, **kwargs)
+
+        def boolean_casting(data: any):
+            """
+            Closure to cast the data to boolean
+            :param data: any
+                Column value
+            :return: any
+                Parsed column value
+            """
+            try:
+                if data or data == 0:
+                    if type(data) == str and data.strip():
+                        if re.match(r'\b[Tt][Rr][Uu][Ee]\b', data.strip()) \
+                                or re.match(r'\b[TtyY]\b', data.strip()) \
+                                or re.match(r'\b[Yy][eE][sS]\b', data.strip()) \
+                                or re.match(r'\-?\d+(\.\d+)?', data.strip()):
+                            bool_data = True
+                        elif re.match(r'\b[fF][aA][lL][sS][Ee]\b', data.strip()) \
+                                or re.match(r'\b[FfnN]\b', data.strip()) \
+                                or re.match(r'\b[Nn][Oo]\b', data.strip()) \
+                                or re.match(r'0+(\.0+)?', data.strip()):
+                            bool_data = False
+                        else:
+                            raise BooleanParsingException("'{}' is not a valid value for boolean type column."\
+                                                          .format(data))
+                    else:
+                        bool_data = bool(data)
+                    if self.enforce_type:
+                        data = bool_data
+                    else:
+                        assert self.TYPE(data)
+                return data
+            except Exception:
+                print('~' * 100)
+                traceback.print_exc(file=sys.stdout)
+                print('~' * 100)
+                raise BooleanParsingException("Column value - {} could not be casted into Boolean.".format(data))
+
+        self.add_func(boolean_casting)
 
 
 class DatetimeParser(FieldParser):

@@ -8,6 +8,7 @@ Currently `parseval` supports following data types:
 * String    
 * Integer /Long  
 * Numeric/Float    
+* Boolean
 * Date    
 * DateTime    
 <pre>  
@@ -65,20 +66,21 @@ Current version comes with following six types of parsers:
 - `StringParser` - _the parser to handle `String` type data_ 
 - `FloatParser` - _the parser to handle `Numeric`/`Float` type data_
 - `IntegerParser` - _the parser to handle `Integer` type data_ 
+- `BooleanParser` - _the parser to handle `Boolean` type data_ 
 - `DatetimeParser` - _the parser to handle `Date` and `Timestamp` type data_ 
 - `ConstantParser` - _the parser which always returns a specified constant value, mostly used in data-collection parsing_  
   
 Each of these parsers comes with some common validations. Some parsers come with specific validations also. Following are all available validations.    
-|             | **FieldParser** | **StringParser** | **FloatParser** | **IntegerParser** | **DatetimeParser** | **ConstantParser** | **Remarks** |  
-|-------------|--------------------|--------------------|--------------------|--------------------|--------------------|--------------------|---------------------------------------------------------------------------------|  
-| not_null    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                | Checks if the input data is not null                                            |  
-| value_set   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                | Checks if input data matches with any of the values of a provided list of value |  
-| max_value   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                | Checks if input data is less than or equals to Maximum allowed value            |  
-| min_value   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                | Checks if input data is higher than or equals to Minimum allowed value          |  
-| range       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:                | Checks if input data reside in Allowed range of values                          |  
-| regex_match | :x:                | :heavy_check_mark: | :x:                | :x:                | :x:                | :x:                | Checks if input data matches with provided pattern                              |  
-| change_case | :x:                | :heavy_check_mark: | :x:                | :x:                | :x:                | :x:                | Returns data with altered case, _Not a validator_ |  
-| convert     | :x:                | :x:                | :x:                | :x:                | :heavy_check_mark: | :x:                | Returns data in desired format, _Not a validator_ |  
+|             | **FieldParser**    | **StringParser**   | **FloatParser**    | **IntegerParser**  | **BooleanParser** | **DatetimeParser** | **ConstantParser** | **Remarks**                                                                     |
+|-------------|--------------------|--------------------|--------------------|--------------------|-------------------|--------------------|--------------------|---------------------------------------------------------------------------------|
+| not_null    | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:               | :heavy_check_mark: | :x:                | Checks if the input data is not null                                            |
+| value_set   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:               | :heavy_check_mark: | :x:                | Checks if input data matches with any of the values of a provided list of value |
+| max_value   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:               | :heavy_check_mark: | :x:                | Checks if input data is lower than or equal to Maximum allowed value            |
+| min_value   | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:               | :heavy_check_mark: | :x:                | Checks if input data is higher than or equals to Minimum allowed value          |
+| range       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :x:               | :heavy_check_mark: | :x:                | Checks if input data reside in Allowed range of values                          |
+| regex_match | :x:                | :heavy_check_mark: | :x:                | :x:                | :x:               | :x:                | :x:                | Checks if input data matches with provided pattern                              |
+| change_case | :x:                | :heavy_check_mark: | :x:                | :x:                | :x:               | :x:                | :x:                | Returns data with altered case, _Not a validator_                               |
+| convert     | :x:                | :x:                | :x:                | :x:                | :x:               | :heavy_check_mark: | :x:                | Returns data in desired format, _Not a validator_                               |
   
 Apart from these APIs user can use `add_func` API of any parser to add their custom validation/conversion function, given that the function always returns the same data or processed data. We will see one example related to that also.  
 <pre>  
@@ -244,4 +246,4 @@ If the source data rows are not delimited like previous case, instead it is fixe
 </pre>  
 ---  
 ---  
-**_That's all from my end. Hope you find the library useful in your daily data engineering. Please reach out for any queries or suggestion. Feel free to use and enrich the code. I am always avaiable at saumalya75@gmail.com and linkedin.com/in/saumalya-sarkar-b3712817b_**
+**_That's all from my end. Hope you find the library useful in your daily data engineering. Please reach out for any queries or suggestion. Feel free to use and enrich the code. I am always avaiable at saumalya75@gmail.com and **linkedin.com/in/saumalya-sarkar-b3712817b_**

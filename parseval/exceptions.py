@@ -119,6 +119,17 @@ class FloatParsingException(BaseException):
         return f"<FloatParsingException({self.msg})>"
 
 
+class BooleanParsingException(BaseException):
+    def __init__(self, msg="Column value could not be casted to Boolean."):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
+
+    def __repr__(self):
+        return f"<BooleanParsingException({self.msg})>"
+
+
 class DateTimeParsingException(BaseException):
     def __init__(self, msg="Column value is not aligned to the provided formats."):
         self.msg = msg
