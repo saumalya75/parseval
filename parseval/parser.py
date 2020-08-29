@@ -315,6 +315,7 @@ class FieldParser:
     def __call__(self):
         return self.build()
 
+
 class StringParser(FieldParser):
     """
     Parser class for string columns.
@@ -781,7 +782,6 @@ class DatetimeParser(FieldParser):
                                                        )
                 else:
                     pd = data
-                print(data, type(data))
 
                 if pd > max_val:
                     raise MaximumValueConstraintException(
