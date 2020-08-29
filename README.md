@@ -108,9 +108,9 @@ First let's build the parser,
   
 Then we will build the parser:  
 ```  
->>> p_func = p_def.build()  
+>>> p_func = p_def.build()  # p_func = p_def()
 ```  
-- `build()` API needs to be applied on each the to build the validation functions to be applied on the data.  
+- `build()` API needs to be applied on each the to build the validation functions to be applied on the data. Or the parser object can be called directly, which will have same effect. 
   
 Now we will pass the input to the parser to get validated/parsed/converted data,  
 ```  
@@ -157,7 +157,7 @@ Let's say user want's to check whether the input number is even or odd, if the n
 >>  
 >> \>>> p_def = IntegerParser().not_null()**.add_func(odd_even_handler)**  
 >>  
->> \>>> p_func = p_def.build()  
+>> \>>> p_func = p_def()  
 >>  
 >> \>>> odd_input = 13
 >>  

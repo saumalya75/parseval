@@ -79,7 +79,7 @@ class FieldParser:
 
         def type_casting(data: any):
             """
-            Closure to cast the data to integer
+            Closure to cast the data to respective type
             :param data: any
                 Column value
             :return: any
@@ -91,7 +91,7 @@ class FieldParser:
                         if self.enforce_type:
                             data = self.TYPE(data)
                         else:
-                            assert self.TYPE(data)
+                            self.TYPE(data)
                 return data
             except Exception:
                 print('~' * 100)
@@ -312,6 +312,8 @@ class FieldParser:
         self.max_value(upper_bound)
         return self
 
+    def __call__(self):
+        return self.build()
 
 class StringParser(FieldParser):
     """
@@ -444,7 +446,8 @@ class StringParser(FieldParser):
                 Column value or default value
             """
             try:
-                data = data if allow_white_space else type(data)(str(data).strip())
+                if data is not None:
+                    data = data if allow_white_space else type(data)(str(data).strip())
                 if not data:
                     if default_value is not None:
                         if self.enforce_type:
@@ -546,7 +549,7 @@ class BooleanParser(FieldParser):
                     if self.enforce_type:
                         data = bool_data
                     else:
-                        assert self.TYPE(data)
+                        self.TYPE(data)
                 return data
             except Exception:
                 print('~' * 100)
@@ -622,7 +625,7 @@ class DatetimeParser(FieldParser):
                         data = datetime.datetime.strptime(str(data), f)
                         break
                     else:
-                        assert datetime.datetime.strptime(str(data), f)
+                        datetime.datetime.strptime(str(data), f)
                         break
                 except Exception:
                     pass
@@ -1079,7 +1082,7 @@ class Parser:
                     else:
                         yield pdict
                     line_number += 1
-                except BaseException as e:
+                except Exception as e:
                     if self.stop_on_error < 0 or errornous_line_count < self.stop_on_error:
                         print(str(e))
                         print("DATA >>> ")
@@ -1119,7 +1122,7 @@ class Parser:
                     else:
                         yield pdict
                     line_number += 1
-                except BaseException as e:
+                except Exception as e:
                     if self.stop_on_error < 0 or errornous_line_count < self.stop_on_error:
                         print(str(e))
                         print("DATA >>> ")
@@ -1166,7 +1169,7 @@ class Parser:
                     else:
                         yield pdict
                     line_number += 1
-                except BaseException as e:
+                except Exception as e:
                     if self.stop_on_error < 0 or errornous_line_count < self.stop_on_error:
                         print(str(e))
                         print("DATA >>> ")
