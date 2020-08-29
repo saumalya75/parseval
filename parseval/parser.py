@@ -6,33 +6,39 @@ import functools
 import traceback
 
 try:
-    from parseval.exceptions import UnexpectedSystemException, \
-        UnexpectedParsingException, \
-        UnsupportedDatatypeException, \
-        SchemaBuildException, \
-        NullValueInNotNullFieldException, \
-        ValidValueCheckException, \
-        MaximumValueConstraintException, \
-        MinimumValueConstraintException, \
-        RegexMatchException, \
-        IntegerParsingException, \
-        FloatParsingException, \
-        BooleanParsingException, \
+    from parseval.exceptions import (
+        UnexpectedSystemException,
+        UnexpectedParsingException,
+        UnsupportedDatatypeException,
+        SchemaBuildException,
+        NullValueInNotNullFieldException,
+        ValidValueCheckException,
+        MaximumValueConstraintException,
+        MinimumValueConstraintException,
+        RegexMatchException,
+        StringParsingException,
+        IntegerParsingException,
+        FloatParsingException,
+        BooleanParsingException,
         DateTimeParsingException
+    )
 except ImportError:
-    from exceptions import UnexpectedSystemException, \
-        UnexpectedParsingException, \
-        UnsupportedDatatypeException, \
-        SchemaBuildException, \
-        NullValueInNotNullFieldException, \
-        ValidValueCheckException, \
-        MaximumValueConstraintException, \
-        MinimumValueConstraintException, \
-        RegexMatchException, \
-        IntegerParsingException, \
-        FloatParsingException, \
-        BooleanParsingException, \
+    from exceptions import (
+        UnexpectedSystemException,
+        UnexpectedParsingException,
+        UnsupportedDatatypeException,
+        SchemaBuildException,
+        NullValueInNotNullFieldException,
+        ValidValueCheckException,
+        MaximumValueConstraintException,
+        MinimumValueConstraintException,
+        RegexMatchException,
+        StringParsingException,
+        IntegerParsingException,
+        FloatParsingException,
+        BooleanParsingException,
         DateTimeParsingException
+    )
 
 
 class FieldParser:
@@ -97,7 +103,7 @@ class FieldParser:
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise IntegerParsingException("Column value - {} could not be casted into Integer.".format(data))
+                raise UnexpectedParsingException("Column value - {} could not be casted into {}.".format(data, self.TYPE))
 
         self.add_func(type_casting)
 
@@ -172,7 +178,7 @@ class FieldParser:
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(null_check)
 
@@ -217,7 +223,7 @@ class FieldParser:
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(valid_value_check)
 
@@ -255,7 +261,7 @@ class FieldParser:
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(valid_value_check)
 
@@ -294,7 +300,7 @@ class FieldParser:
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(valid_value_check)
 
@@ -351,7 +357,7 @@ class StringParser(FieldParser):
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise FloatParsingException("Column value - {} could not be casted into String.".format(data))
+                raise StringParsingException("Column value - {} could not be casted into String.".format(data))
 
         self.add_func(string_casting)
 
@@ -387,7 +393,7 @@ class StringParser(FieldParser):
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(pattern_match)
 
@@ -450,7 +456,9 @@ class StringParser(FieldParser):
                 if data is not None:
                     data = data if allow_white_space else type(data)(str(data).strip())
                 if not data:
-                    if default_value is not None:
+                    if allow_white_space and data is not None:
+                        return data
+                    elif default_value is not None:
                         if self.enforce_type:
                             return str(default_value)
                         else:
@@ -463,7 +471,7 @@ class StringParser(FieldParser):
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(null_check)
 
@@ -552,11 +560,11 @@ class BooleanParser(FieldParser):
                     else:
                         self.TYPE(data)
                 return data
-            except Exception:
+            except Exception as e:
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise BooleanParsingException("Column value - {} could not be casted into Boolean.".format(data))
+                raise e
 
         self.add_func(boolean_casting)
 
@@ -628,7 +636,7 @@ class DatetimeParser(FieldParser):
                     else:
                         datetime.datetime.strptime(str(data), f)
                         break
-                except Exception:
+                except:
                     pass
             else:
                 raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
@@ -686,7 +694,7 @@ class DatetimeParser(FieldParser):
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(null_check)
 
@@ -716,7 +724,7 @@ class DatetimeParser(FieldParser):
                         try:
                             data = datetime.datetime.strptime(str(data), f)
                             break
-                        except Exception:
+                        except:
                             pass
                     else:
                         raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
@@ -792,7 +800,7 @@ class DatetimeParser(FieldParser):
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(valid_value_check)
 
@@ -855,7 +863,7 @@ class DatetimeParser(FieldParser):
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(valid_value_check)
 
@@ -932,7 +940,7 @@ class DatetimeParser(FieldParser):
                         try:
                             pd = datetime.datetime.strptime(str(data), f)
                             break
-                        except Exception:
+                        except:
                             pass
                     else:
                         raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
@@ -947,7 +955,7 @@ class DatetimeParser(FieldParser):
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(valid_value_check)
 
@@ -1011,8 +1019,8 @@ class Parser:
                 if self.input_row_sep:
                     self.parsed_row_sep = self.input_row_sep
                 else:
-                    raise Exception(
-                        "`parsed_sep` keyword argment is mandatory while `parsed_row_format` argumet is provided as 'delimited'.")
+                    raise UnexpectedSystemException(
+                        "`parsed_sep` keyword argument is mandatory while `parsed_row_format` argumet is provided as 'delimited'.")
             else:
                 self.parsed_row_sep: str = parsed_row_sep
         self.stop_on_error = stop_on_error
@@ -1178,4 +1186,3 @@ class Parser:
                         print("CONTINUING TO PARSE DATA BECAUSE STOP_ON_ERROR CONDITION NOT MET YET!")
                     else:
                         raise e
-        # return pdata

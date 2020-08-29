@@ -97,6 +97,17 @@ class RegexMatchException(Exception):
         return f"<RegexMatchException({self.msg})>"
 
 
+class StringParsingException(Exception):
+    def __init__(self, msg="Column value could not be casted to String."):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
+
+    def __repr__(self):
+        return f"<StringParsingException({self.msg})>"
+
+
 class IntegerParsingException(Exception):
     def __init__(self, msg="Column value could not be casted to Integer."):
         self.msg = msg
