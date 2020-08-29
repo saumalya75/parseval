@@ -1,4 +1,4 @@
-class UnexpectedSystemException(BaseException):
+class UnexpectedSystemException(Exception):
     def __init__(self, msg="Unexpected error occurred."):
         self.msg = msg
 
@@ -9,7 +9,7 @@ class UnexpectedSystemException(BaseException):
         return f"<UnexpectedSystemException({self.msg})>"
 
 
-class UnexpectedParsingException(BaseException):
+class UnexpectedParsingException(Exception):
     def __init__(self, msg="Unexpected error occurred while parsing the data."):
         self.msg = msg
 
@@ -20,7 +20,7 @@ class UnexpectedParsingException(BaseException):
         return f"<UnexpectedParsingException({self.msg})>"
 
 
-class UnsupportedDatatypeException(BaseException):
+class UnsupportedDatatypeException(Exception):
     def __init__(self, msg="Unsupported datatype for column."):
         self.msg = msg
 
@@ -31,7 +31,7 @@ class UnsupportedDatatypeException(BaseException):
         return f"<UnsupportedDatatypeException({self.msg})>"
 
 
-class SchemaBuildException(BaseException):
+class SchemaBuildException(Exception):
     def __init__(self, msg="Unexpected error occurred while building the schema. Please declare the schema properly."):
         self.msg = msg
 
@@ -42,7 +42,7 @@ class SchemaBuildException(BaseException):
         return f"<SchemaBuildException({self.msg})>"
 
 
-class NullValueInNotNullFieldException(BaseException):
+class NullValueInNotNullFieldException(Exception):
     def __init__(self, msg="NULL value detected in Not NULL field."):
         self.msg = msg
 
@@ -53,7 +53,7 @@ class NullValueInNotNullFieldException(BaseException):
         return f"<NullValueInNotNullFieldException({self.msg})>"
 
 
-class ValidValueCheckException(BaseException):
+class ValidValueCheckException(Exception):
     def __init__(self, msg="Provided value is not part of valid value list."):
         self.msg = msg
 
@@ -64,7 +64,7 @@ class ValidValueCheckException(BaseException):
         return f"<ValidValueCheckException({self.msg})>"
 
 
-class MaximumValueConstraintException(BaseException):
+class MaximumValueConstraintException(Exception):
     def __init__(self, msg="Provided value is higher than maximum allowed value for the column."):
         self.msg = msg
 
@@ -75,7 +75,7 @@ class MaximumValueConstraintException(BaseException):
         return f"<MaximumValueConstraintException({self.msg})>"
 
 
-class MinimumValueConstraintException(BaseException):
+class MinimumValueConstraintException(Exception):
     def __init__(self, msg="Provided value is lower than maximum allowed value for the column."):
         self.msg = msg
 
@@ -86,7 +86,7 @@ class MinimumValueConstraintException(BaseException):
         return f"<MinimumValueConstraintException({self.msg})>"
 
 
-class RegexMatchException(BaseException):
+class RegexMatchException(Exception):
     def __init__(self, msg="Provided value does not match with expected pattern."):
         self.msg = msg
 
@@ -97,7 +97,7 @@ class RegexMatchException(BaseException):
         return f"<RegexMatchException({self.msg})>"
 
 
-class IntegerParsingException(BaseException):
+class IntegerParsingException(Exception):
     def __init__(self, msg="Column value could not be casted to Integer."):
         self.msg = msg
 
@@ -108,7 +108,7 @@ class IntegerParsingException(BaseException):
         return f"<IntegerParsingException({self.msg})>"
 
 
-class FloatParsingException(BaseException):
+class FloatParsingException(Exception):
     def __init__(self, msg="Column value could not be casted to Float."):
         self.msg = msg
 
@@ -119,7 +119,7 @@ class FloatParsingException(BaseException):
         return f"<FloatParsingException({self.msg})>"
 
 
-class BooleanParsingException(BaseException):
+class BooleanParsingException(Exception):
     def __init__(self, msg="Column value could not be casted to Boolean."):
         self.msg = msg
 
@@ -130,7 +130,7 @@ class BooleanParsingException(BaseException):
         return f"<BooleanParsingException({self.msg})>"
 
 
-class DateTimeParsingException(BaseException):
+class DateTimeParsingException(Exception):
     def __init__(self, msg="Column value is not aligned to the provided formats."):
         self.msg = msg
 
