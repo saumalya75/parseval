@@ -150,7 +150,7 @@ class FieldParser:
         :return: FieldParser
             self
         """
-        if type(default_value) != self.TYPE:
+        if default_value and type(default_value) != self.TYPE:
             raise UnsupportedDatatypeException(f"{type(default_value)} type data can not be used as default value of"
                                                f" {self.TYPE} type column. Please provide default value of"
                                                f" {self.TYPE} type.")
@@ -586,7 +586,7 @@ class DatetimeParser(FieldParser):
     def __init__(self,
                  start: int = 0,
                  end: int = 0,
-                 formats: typing.List = ['%Y%m%d', '%Y%md%H%M%S'],
+                 formats: typing.List = ['%Y%m%d', '%Y%m%d%H%M%S'],
                  quoted: int = 0,
                  enforce_type: bool = True
                  ):
@@ -648,7 +648,7 @@ class DatetimeParser(FieldParser):
 
     def not_null(self,
                  default_value: typing.Union[str, datetime.datetime] = None,
-                 format: str = '%Y-%m-%d %H:%M:%S'):
+                 format: str = '%Y%m%d%H%M%S'):
         """
         Building not null check closure.
         :param default_value: typing.Union[str, datetime.datetime]
@@ -698,7 +698,7 @@ class DatetimeParser(FieldParser):
 
         return self.add_func(null_check)
 
-    def convert(self, format: str = '%Y-%m-%d'):
+    def convert(self, format: str = '%Y%m%d%H%M%S'):
         """
         Closure to convert datetime/date column to desired string format
         :param format: str
@@ -743,7 +743,7 @@ class DatetimeParser(FieldParser):
 
     def max_value(self,
                   value: typing.Union[str, datetime.datetime],
-                  format: str = '%Y-%m-%d %H:%M:%S'):
+                  format: str = '%Y%m%d%H%M%S'):
         """
         Building maximum value check closure.
         :param value: typing.Union[str, datetime.datetime]
@@ -806,7 +806,7 @@ class DatetimeParser(FieldParser):
 
     def min_value(self,
                   value: typing.Union[str, datetime.datetime],
-                  format: str = '%Y-%m-%d %H:%M:%S'):
+                  format: str = '%Y%m%d%H%M%S'):
         """
         Building minimum value check closure.
         :param value: typing.Union[str, datetime.datetime]
@@ -870,7 +870,7 @@ class DatetimeParser(FieldParser):
     def range(self,
               lower_bound: typing.Union[str, datetime.datetime],
               upper_bound: typing.Union[str, datetime.datetime],
-              format: str = '%Y-%m-%d %H:%M:%S'
+              format: str = '%Y%m%d%H%M%S'
               ):
         """
         Building range check API, max_val and min_val APIs will be used to achieve this.
@@ -889,7 +889,7 @@ class DatetimeParser(FieldParser):
 
     def value_set(self,
                   values: typing.List[typing.Union[str, datetime.datetime]],
-                  format: str = '%Y-%m-%d %H:%M:%S',
+                  format: str = '%Y%m%d%H%M%S',
                   nullable: bool = True
                   ):
         """
@@ -946,6 +946,8 @@ class DatetimeParser(FieldParser):
                         raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
                                                        .format(data, self._formats)
                                                        )
+                else:
+                    pd = data
                 if pd not in valid_values:
                     raise ValidValueCheckException(
                         "Provided value - '{}' is not part of valid value list - {}.".format(data, values))

@@ -34,7 +34,6 @@ def test_not_null_validator():
         assert func(None)
         assert func("") == ""
     p = StringParser().not_null(allow_white_space=True)
-    print(p._funcs)
     func = p.build()
     assert func("") == ""
 

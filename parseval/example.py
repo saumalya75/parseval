@@ -1,3 +1,5 @@
+# TODO Remove this file.
+# TODO Remove max_value, min_value and range API documentation from StringParser
 import tempfile
 try:
     from parseval.parser import *
