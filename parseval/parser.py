@@ -1017,15 +1017,32 @@ class Parser:
         self.input_row_sep: str = input_row_sep
         self.schema: typing.List[typing.Tuple] = schema
         self.parsed_row_format: str = parsed_row_format
+        if self.parsed_row_format not in ["delimited", "fixed-width", "json", "dict"]:
+            raise UnexpectedSystemException(
+                "Unsupported output format. Allowed formats are 'delimited', 'fixed-width' (available only for 'fixed-width' formatted input), 'json' (only available for json formatted input) and 'dict'."
+            )
         if self.parsed_row_format == "delimited":
             if not parsed_row_sep:
                 if self.input_row_sep:
                     self.parsed_row_sep = self.input_row_sep
                 else:
                     raise UnexpectedSystemException(
-                        "`parsed_sep` keyword argument is mandatory while `parsed_row_format` argumet is provided as 'delimited'.")
+                        "`parsed_sep` keyword argument is mandatory while `parsed_row_format` argumet is provided as 'delimited'."
+                    )
             else:
                 self.parsed_row_sep: str = parsed_row_sep
+        if self.parsed_row_format == "fixed-width" and self.input_row_format != "fixed-width":
+            raise UnexpectedSystemException(
+                "`fixed-width` formatted output is only supported for `fixed-width` formatted input."
+            )
+        if self.input_row_format == "json" and self.parsed_row_format not in ["json", "dict"]:
+            raise UnexpectedSystemException(
+                "Only `json` and `dict` formatted output are supported for `jaon` formatted input."
+            )
+        if self.parsed_row_format == "json" and self.input_row_format != "json":
+            raise UnexpectedSystemException(
+                "Only `json` formatted input can be converted to `jaon` formatted output."
+            )
         self.stop_on_error = stop_on_error
         self._parser_funcs: typing.Dict = {}
 
@@ -1126,10 +1143,14 @@ class Parser:
                             raise
                         if self.parsed_row_format == "delimited":
                             plist.append(pd)
+                        if self.parsed_row_format == "fixed-width":
+                            pass
                         else:
                             pdict[col[0]] = pd
                     if self.parsed_row_format == "delimited":
                         yield self.parsed_row_sep.join((str(e) for e in plist))
+                    elif self.parsed_row_format == "fixed-width":
+                        yield d
                     else:
                         yield pdict
                     line_number += 1
@@ -1145,9 +1166,11 @@ class Parser:
         else:
             line_number = 0
             errornous_line_count = 0
+            json_allowed = None
             for d in data:
                 try:
                     if type(d) == str:
+                        json_allowed = True
                         d = json.loads(d)
                     if len(list(d.keys())) > len(self.schema):
                         raise UnexpectedParsingException(
@@ -1155,12 +1178,11 @@ class Parser:
                                 line_number + 1
                             )
                         )
-                    plist: typing.List = []
                     pdict: typing.Dict = {}
                     for col, _ in self.schema:
-                        if d.get(col, None):
+                        if col in list(d.keys()):
                             try:
-                                pd = self._parser_funcs[col](d[col])
+                                pdict[col] = self._parser_funcs[col](d[col])
                             except Exception as e:
                                 print("<" * 50, end='')
                                 print(">" * 50)
@@ -1168,21 +1190,23 @@ class Parser:
                                     line_number + 1
                                 ))
                                 print('COLUMN NAME: {}'.format(
-                                    col[0]
+                                    col
                                 ))
                                 print("<" * 50, end='')
                                 print(">" * 50)
                                 raise e
-                            if self.parsed_row_format == "delimited":
-                                plist.append(pd)
-                            else:
-                                pdict[col[0]] = pd
-                    if self.parsed_row_format == "delimited":
-                        yield self.parsed_row_sep.join((str(d) for d in plist))
+                    if self.parsed_row_format == "json":
+                        if not json_allowed:
+                            raise UnexpectedSystemException(
+                                "`json` formatted output is not supported for `dict` formatted input."
+                            )
+                        yield json.dumps(d)
                     else:
                         yield pdict
                     line_number += 1
                 except Exception as e:
+                    if isinstance(e, UnexpectedSystemException):
+                        raise e
                     if self.stop_on_error < 0 or errornous_line_count < self.stop_on_error:
                         print(str(e))
                         print("DATA >>> ")

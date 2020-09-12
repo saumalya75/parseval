@@ -195,27 +195,8 @@ def _json_bad_lol():
 
 def test_json_input_as_file_object_one_error_allowed(schema, json_file_name):
     with open(json_file_name, 'r') as sf:
-        p_allow_one_error = Parser(schema=schema, stop_on_error=1, input_row_format='json')
+        p_allow_one_error = Parser(schema=schema, stop_on_error=-1, input_row_format='json', parsed_row_format="json")
         parsed_data = p_allow_one_error.parse(sf)
-        assert isinstance(parsed_data, types.GeneratorType)
-        parsed_lines = []
-        for parsed_line in parsed_data:  # calling data parsing on file object
-            assert isinstance(parsed_line, str)
-            parsed_lines.append(parsed_line)
-        assert len(parsed_lines) == 2
-
-
-def test_json_input_as_file_object_no_error_allowed(schema, json_file_name):
-    with open(json_file_name, 'r') as sf:
-        p_allow_no_error = Parser(schema=schema, input_row_format='json')
-        with pytest.raises(Exception):
-            list(p_allow_no_error.parse(sf))
-
-
-def test_json_input_as_file_object_all_error_allowed(schema, json_bad_file_name):
-    with open(json_bad_file_name, 'r') as sf:
-        p_allow_all_error = Parser(schema=schema, stop_on_error=-1, input_row_format='json')
-        parsed_data = p_allow_all_error.parse(sf)
         assert isinstance(parsed_data, types.GeneratorType)
         parsed_lines = []
         for parsed_line in parsed_data:  # calling data parsing on file object
@@ -224,29 +205,48 @@ def test_json_input_as_file_object_all_error_allowed(schema, json_bad_file_name)
         assert len(parsed_lines) == 1
 
 
+def test_json_input_as_file_object_no_error_allowed(schema, json_file_name):
+    with open(json_file_name, 'r') as sf:
+        p_allow_no_error = Parser(schema=schema, input_row_format='json', parsed_row_format="json")
+        with pytest.raises(Exception):
+            list(p_allow_no_error.parse(sf))
+
+
+def test_json_input_as_file_object_all_error_allowed(schema, json_bad_file_name):
+    with open(json_bad_file_name, 'r') as sf:
+        p_allow_all_error = Parser(schema=schema, stop_on_error=-1, input_row_format='json', parsed_row_format="json")
+        parsed_data = p_allow_all_error.parse(sf)
+        assert isinstance(parsed_data, types.GeneratorType)
+        parsed_lines = []
+        for parsed_line in parsed_data:  # calling data parsing on file object
+            assert isinstance(parsed_line, str)
+            parsed_lines.append(parsed_line)
+        assert len(parsed_lines) == 0
+
+
 def test_json_input_as_lol_one_error_allowed(schema, json_lol):
-    p_allow_one_error = Parser(schema=schema, stop_on_error=1, input_row_format='json')
+    p_allow_one_error = Parser(schema=schema, stop_on_error=-1, input_row_format='json', parsed_row_format="dict")
     parsed_data = p_allow_one_error.parse(json_lol)
     assert isinstance(parsed_data, types.GeneratorType)
     parsed_lines = []
     for parsed_line in parsed_data:  # calling data parsing on file object
-        assert isinstance(parsed_line, str)
+        assert isinstance(parsed_line, dict)
         parsed_lines.append(parsed_line)
-    assert len(parsed_lines) == 2
+    assert len(parsed_lines) == 1
 
 
 def test_json_input_as_lol_no_error_allowed(schema, json_lol):
-    p_allow_no_error = Parser(schema=schema, input_row_format='json')
+    p_allow_no_error = Parser(schema=schema, input_row_format='json', parsed_row_format="dict")
     with pytest.raises(Exception):
         list(p_allow_no_error.parse(json_lol))
 
 
 def test_json_input_as_lol_all_error_allowed(schema, json_bad_lol):
-    p_allow_all_error = Parser(schema=schema, stop_on_error=-1, input_row_format='json')
+    p_allow_all_error = Parser(schema=schema, stop_on_error=-1, input_row_format='json', parsed_row_format="dict")
     parsed_data = p_allow_all_error.parse(json_bad_lol)
     assert isinstance(parsed_data, types.GeneratorType)
     parsed_lines = []
     for parsed_line in parsed_data:  # calling data parsing on file object
-        assert isinstance(parsed_line, str)
+        assert isinstance(parsed_line, dict)
         parsed_lines.append(parsed_line)
-    assert len(parsed_lines) == 1
+    assert len(parsed_lines) == 0
