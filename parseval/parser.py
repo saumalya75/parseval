@@ -1,3 +1,4 @@
+import json
 import re
 import sys
 import typing
@@ -1146,6 +1147,8 @@ class Parser:
             errornous_line_count = 0
             for d in data:
                 try:
+                    if type(d) == str:
+                        d = json.loads(d)
                     if len(list(d.keys())) > len(self.schema):
                         raise UnexpectedParsingException(
                             "Number of columns in line - {} is higher that number of declared columns in schema.".format(
@@ -1158,7 +1161,7 @@ class Parser:
                         if d.get(col, None):
                             try:
                                 pd = self._parser_funcs[col](d[col])
-                            except:
+                            except Exception as e:
                                 print("<" * 50, end='')
                                 print(">" * 50)
                                 print('LINE NUMBER: {}'.format(
@@ -1169,13 +1172,13 @@ class Parser:
                                 ))
                                 print("<" * 50, end='')
                                 print(">" * 50)
-                                raise
+                                raise e
                             if self.parsed_row_format == "delimited":
                                 plist.append(pd)
                             else:
                                 pdict[col[0]] = pd
                     if self.parsed_row_format == "delimited":
-                        yield self.parsed_row_sep.join(plist)
+                        yield self.parsed_row_sep.join((str(d) for d in plist))
                     else:
                         yield pdict
                     line_number += 1

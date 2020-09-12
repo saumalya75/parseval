@@ -26,11 +26,12 @@ fw_schema = [
     ('BIRTH_YEAR', IntegerParser(12, 13).max_value(20)),
     ('BALANCE', FloatParser(14, 17).min_value(10.0))
 ]
-p = Parser(schema=fw_schema, input_row_format='fixed-width', parsed_row_format='json')
+p = Parser(schema=fw_schema, stop_on_error=1, input_row_format='fixed-width', parsed_row_format='json')
 print('#' * 50, " FIXED WIDTH DATASET PARSING ", '#' * 50)
 parsed_data = p.parse([
     'd0sauMvalue191000',
-    'd0pouM     2090.03'
+    'd0pouM     2090.03',
+    'd0pouX     2090.03'
 ])
 print("\n\n>>> Parsed Data:")
 for data in parsed_data:
