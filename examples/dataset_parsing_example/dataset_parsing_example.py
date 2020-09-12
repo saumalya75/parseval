@@ -1,6 +1,7 @@
 import pprint
 import tempfile
 import datetime
+import logging
 from parseval.parser import Parser
 from parseval.parser import (
     StringParser,
@@ -18,6 +19,8 @@ from parseval.parser import (
 
 # To process any kind of dataset, first one schema has to be defined
 # Schema is nothing but a set of parsers, stored in a specific structure in the sequence of columns in dataset
+
+logging.basicConfig(format='%(levelname)s:%(asctime)s:: %(message)s', level=logging.DEBUG)
 
 
 # Some custom validation
@@ -46,7 +49,7 @@ schema = [
     ('BLOCK_NUMBER', IntegerParser().add_func(_parity_check).range(0, 40))
 ]
 
-p = Parser(schema=schema, stop_on_error=1, parsed_row_format='json')
+p = Parser(schema=schema, stop_on_error=1, parsed_row_format='dict')
 # Creating temporary file for the example
 with tempfile.NamedTemporaryFile() as tf:
     with open(tf.name, 'w') as sf:
@@ -54,11 +57,12 @@ with tempfile.NamedTemporaryFile() as tf:
         sf.writelines('"DEF"||abc|||||34\n')
         sf.writelines('"DEF"|Manual_2020-23-12||2020-01-23 10:20:23|1200|11||')
 
-    print('#' * 50, " DATASET PARSING ", '#' * 50)
+    logging.info(('#' * 50) + " DATASET PARSING " + ('#' * 50))
     parsed_lines = []
     with open(tf.name, 'r') as sf:
         for parsed_line in p.parse(sf):  # calling data parsing on file object
             parsed_lines.append(parsed_line)
-    print("\n\n>>> Parsed Data:")
-    pprint.pprint(parsed_lines)
-    print('#' * 125)
+    logging.info("\n\n")
+    logging.info(">>> Parsed Data:")
+    logging.info(pprint.pformat(parsed_lines))
+    logging.info('#' * 125)

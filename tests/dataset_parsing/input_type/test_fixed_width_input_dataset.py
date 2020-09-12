@@ -1,14 +1,11 @@
 import pytest
 import types
 import tempfile
-import datetime
 from parseval.parser import Parser
 from parseval.parser import (
     StringParser,
-    DatetimeParser,
     IntegerParser,
     FloatParser,
-    ConstantParser
 )
 
 

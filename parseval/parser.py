@@ -1,10 +1,9 @@
 import json
 import re
-import sys
 import typing
 import datetime
 import functools
-import traceback
+import logging
 
 try:
     from parseval.exceptions import (
@@ -40,6 +39,8 @@ except ImportError:
         BooleanParsingException,
         DateTimeParsingException
     )
+
+logging.basicConfig(format='%(levelname)s:%(asctime)s:: %(message)s', level=logging.DEBUG)
 
 
 class FieldParser:
@@ -101,9 +102,9 @@ class FieldParser:
                             self.TYPE(data)
                 return data
             except Exception:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('~' * 100)
+                logging.exception("Datatype casting exception:")
+                logging.error('~' * 100)
                 raise UnexpectedParsingException("Column value - {} could not be casted into {}.".format(data, self.TYPE))
 
         self.add_func(type_casting)
@@ -120,9 +121,9 @@ class FieldParser:
             else:
                 return lambda x: x
         except Exception as e:
-            print('~' * 100)
-            traceback.print_exc(file=sys.stdout)
-            print('~' * 100)
+            logging.error('~' * 100)
+            logging.exception("Parser functions building exception:")
+            logging.error('~' * 100)
             raise UnexpectedSystemException()
 
     def add_func(self, f: any):
@@ -137,9 +138,9 @@ class FieldParser:
         try:
             self._funcs.append(f)
         except Exception as e:
-            print('~' * 100)
-            traceback.print_exc(file=sys.stdout)
-            print('~' * 100)
+            logging.error('~' * 100)
+            logging.exception("Custom function addition exception:")
+            logging.error('~' * 100)
             raise UnexpectedSystemException()
         return self
 
@@ -176,9 +177,9 @@ class FieldParser:
                 else:
                     return data
             except Exception as e:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('~' * 100)
+                logging.exception("Not null enforcement exception:")
+                logging.error('~' * 100)
                 raise e
 
         return self.add_func(null_check)
@@ -221,9 +222,9 @@ class FieldParser:
                 else:
                     return data
             except Exception as e:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('~' * 100)
+                logging.exception("Value set check exception:")
+                logging.error('~' * 100)
                 raise e
 
         return self.add_func(valid_value_check)
@@ -259,9 +260,9 @@ class FieldParser:
                         )
                 return data
             except Exception as e:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('~' * 100)
+                logging.exception("Max value check exception:")
+                logging.error('~' * 100)
                 raise e
 
         return self.add_func(valid_value_check)
@@ -298,9 +299,10 @@ class FieldParser:
                         )
                 return data
             except Exception as e:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('\n')
+                logging.error('~' * 100)
+                logging.exception("Min value check exception:")
+                logging.error('~' * 100)
                 raise e
 
         return self.add_func(valid_value_check)
@@ -355,9 +357,10 @@ class StringParser(FieldParser):
                 else:
                     return data
             except Exception:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('\n')
+                logging.error('~' * 100)
+                logging.exception("String casting exception:")
+                logging.error('~' * 100)
                 raise StringParsingException("Column value - {} could not be casted into String.".format(data))
 
         self.add_func(string_casting)
@@ -391,9 +394,10 @@ class StringParser(FieldParser):
                         )
                 return data
             except Exception as e:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('\n')
+                logging.error('~' * 100)
+                logging.exception("Pattern match exception:")
+                logging.error('~' * 100)
                 raise e
 
         return self.add_func(pattern_match)
@@ -425,9 +429,10 @@ class StringParser(FieldParser):
                 else:
                     return data
             except Exception as e:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('\n')
+                logging.error('~' * 100)
+                logging.exception("Case change exception:")
+                logging.error('~' * 100)
                 raise UnexpectedParsingException()
 
         return self.add_func(change_case)
@@ -469,9 +474,10 @@ class StringParser(FieldParser):
                 else:
                     return data
             except Exception as e:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('\n')
+                logging.error('~' * 100)
+                logging.exception("Null check exception:")
+                logging.error('~' * 100)
                 raise e
 
         return self.add_func(null_check)
@@ -562,9 +568,10 @@ class BooleanParser(FieldParser):
                         self.TYPE(data)
                 return data
             except Exception as e:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('\n')
+                logging.error('~' * 100)
+                logging.exception("Boolean casting exception:")
+                logging.error('~' * 100)
                 raise e
 
         self.add_func(boolean_casting)
@@ -667,9 +674,10 @@ class DatetimeParser(FieldParser):
                     else:
                         datetime.datetime.strptime(str(default_value), format)
                 except Exception:
-                    print('~' * 100)
-                    traceback.print_exc(file=sys.stdout)
-                    print('~' * 100)
+                    logging.error('\n')
+                    logging.error('~' * 100)
+                    logging.exception("Null check exception:")
+                    logging.error('~' * 100)
                     raise UnexpectedParsingException("Provided default value - '{}' is not of '{}' format."
                                                      .format(default_value, format)
                                                      )
@@ -692,9 +700,10 @@ class DatetimeParser(FieldParser):
                 else:
                     return data
             except Exception as e:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('\n')
+                logging.error('~' * 100)
+                logging.exception("Null check exception:")
+                logging.error('~' * 100)
                 raise e
 
         return self.add_func(null_check)
@@ -733,9 +742,10 @@ class DatetimeParser(FieldParser):
                                                        )
                 return datetime.datetime.strftime(data, format)
             except Exception as e:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('\n')
+                logging.error('~' * 100)
+                logging.exception("Date format conversion exception:")
+                logging.error('~' * 100)
                 DateTimeParsingException("It was not possible to convert column data - '{}' to '{}' format."
                                          .format(data, format)
                                          )
@@ -758,9 +768,9 @@ class DatetimeParser(FieldParser):
             try:
                 max_val = datetime.datetime.strptime(str(value), format)
             except Exception:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('~' * 100)
+                logging.exception("Max value check exception:")
+                logging.error('~' * 100)
                 raise UnexpectedParsingException("Provided maximum allowed value - '{}' is not of '{}' format."
                                                  .format(value, format)
                                                  )
@@ -798,9 +808,9 @@ class DatetimeParser(FieldParser):
                     )
                 return data
             except Exception as e:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('~' * 100)
+                logging.exception("Max value check exception:")
+                logging.error('~' * 100)
                 raise e
 
         return self.add_func(valid_value_check)
@@ -821,9 +831,9 @@ class DatetimeParser(FieldParser):
             try:
                 min_val = datetime.datetime.strptime(str(value), format)
             except Exception:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('~' * 100)
+                logging.exception("Min value check exception:")
+                logging.error('~' * 100)
                 raise UnexpectedParsingException("Provided minimum allowed value - '{}' is not of '{}' format."
                                                  .format(value, format)
                                                  )
@@ -861,9 +871,9 @@ class DatetimeParser(FieldParser):
                     )
                 return data
             except Exception as e:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('~' * 100)
+                logging.exception("Min value check exception:")
+                logging.error('~' * 100)
                 raise e
 
         return self.add_func(valid_value_check)
@@ -913,9 +923,9 @@ class DatetimeParser(FieldParser):
                     try:
                         valid_values.append(datetime.datetime.strptime(str(value), format))
                     except Exception:
-                        print('~' * 100)
-                        traceback.print_exc(file=sys.stdout)
-                        print('~' * 100)
+                        logging.error('~' * 100)
+                        logging.exception("Value set check exception:")
+                        logging.error('~' * 100)
                         raise UnexpectedParsingException("Provided allowed value - '{}' is not of '{}' format."
                                                          .format(value, format)
                                                          )
@@ -955,9 +965,9 @@ class DatetimeParser(FieldParser):
                 else:
                     return data
             except Exception as e:
-                print('~' * 100)
-                traceback.print_exc(file=sys.stdout)
-                print('~' * 100)
+                logging.error('~' * 100)
+                logging.exception("Value set check exception:")
+                logging.error('~' * 100)
                 raise e
 
         return self.add_func(valid_value_check)
@@ -1068,9 +1078,9 @@ class Parser:
         try:
             self._build()
         except Exception:
-            print('~' * 100)
-            traceback.print_exc(file=sys.stdout)
-            print('~' * 100)
+            logging.error('~' * 100)
+            logging.exception("Parser function builder exception:")
+            logging.error('~' * 100)
             raise SchemaBuildException()
         if self.input_row_format == "delimited":
             line_number = 0
@@ -1090,16 +1100,16 @@ class Parser:
                         try:
                             pd = self._parser_funcs[col[0]](dlist[i])
                         except:
-                            print("<" * 50, end='')
-                            print(">" * 50)
-                            print('LINE NUMBER: {}'.format(
+                            logging.error("<" * 50, end='')
+                            logging.error(">" * 50)
+                            logging.error('LINE NUMBER: {}'.format(
                                 line_number + 1
                             ))
-                            print('COLUMN NAME: {}'.format(
+                            logging.error('COLUMN NAME: {}'.format(
                                 col[0]
                             ))
-                            print("<" * 50, end='')
-                            print(">" * 50)
+                            logging.error("<" * 50, end='')
+                            logging.error(">" * 50)
                             raise
                         if self.parsed_row_format == "delimited":
                             plist.append(pd)
@@ -1112,10 +1122,10 @@ class Parser:
                     line_number += 1
                 except Exception as e:
                     if self.stop_on_error < 0 or errornous_line_count < self.stop_on_error:
-                        print(str(e))
-                        print("DATA >>> ")
-                        print(d)
-                        print("CONTINUING TO PARSE DATA BECAUSE STOP_ON_ERROR CONDITION NOT MET YET!")
+                        logging.error(str(e))
+                        logging.error("DATA >>> ")
+                        logging.error(d)
+                        logging.error("CONTINUING TO PARSE DATA BECAUSE STOP_ON_ERROR CONDITION NOT MET YET!")
                         errornous_line_count += 1
                     else:
                         raise e
@@ -1130,16 +1140,16 @@ class Parser:
                         try:
                             pd = self._parser_funcs[col[0]](d)
                         except:
-                            print("<" * 50, end='')
-                            print(">" * 50)
-                            print('LINE NUMBER: {}'.format(
+                            logging.error("<" * 50, end='')
+                            logging.error(">" * 50)
+                            logging.error('LINE NUMBER: {}'.format(
                                 line_number + 1
                             ))
-                            print('COLUMN NAME: {}'.format(
+                            logging.error('COLUMN NAME: {}'.format(
                                 col[0]
                             ))
-                            print("<" * 50, end='')
-                            print(">" * 50)
+                            logging.error("<" * 50, end='')
+                            logging.error(">" * 50)
                             raise
                         if self.parsed_row_format == "delimited":
                             plist.append(pd)
@@ -1156,11 +1166,11 @@ class Parser:
                     line_number += 1
                 except Exception as e:
                     if self.stop_on_error < 0 or errornous_line_count < self.stop_on_error:
-                        print(str(e))
-                        print("DATA >>> ")
-                        print(d)
+                        logging.error(str(e))
+                        logging.error("DATA >>> ")
+                        logging.error(d)
                         errornous_line_count += 1
-                        print("CONTINUING TO PARSE DATA BECAUSE STOP_ON_ERROR CONDITION NOT MET YET!")
+                        logging.error("CONTINUING TO PARSE DATA BECAUSE STOP_ON_ERROR CONDITION NOT MET YET!")
                     else:
                         raise e
         else:
@@ -1184,16 +1194,16 @@ class Parser:
                             try:
                                 pdict[col] = self._parser_funcs[col](d[col])
                             except Exception as e:
-                                print("<" * 50, end='')
-                                print(">" * 50)
-                                print('LINE NUMBER: {}'.format(
+                                logging.error("<" * 50, end='')
+                                logging.error(">" * 50)
+                                logging.error('LINE NUMBER: {}'.format(
                                     line_number + 1
                                 ))
-                                print('COLUMN NAME: {}'.format(
+                                logging.error('COLUMN NAME: {}'.format(
                                     col
                                 ))
-                                print("<" * 50, end='')
-                                print(">" * 50)
+                                logging.error("<" * 50, end='')
+                                logging.error(">" * 50)
                                 raise e
                     if self.parsed_row_format == "json":
                         if not json_allowed:
@@ -1208,10 +1218,10 @@ class Parser:
                     if isinstance(e, UnexpectedSystemException):
                         raise e
                     if self.stop_on_error < 0 or errornous_line_count < self.stop_on_error:
-                        print(str(e))
-                        print("DATA >>> ")
-                        print(d)
+                        logging.error(str(e))
+                        logging.error("DATA >>> ")
+                        logging.error(d)
                         errornous_line_count += 1
-                        print("CONTINUING TO PARSE DATA BECAUSE STOP_ON_ERROR CONDITION NOT MET YET!")
+                        logging.error("CONTINUING TO PARSE DATA BECAUSE STOP_ON_ERROR CONDITION NOT MET YET!")
                     else:
                         raise e

@@ -1,6 +1,9 @@
+import logging
 from parseval.parser import StringParser
 # Special Feature 1: Add custom validation
 # This feature is available on all the parsers, the example will be shown on StringParser
+
+logging.basicConfig(format='%(levelname)s:%(asctime)s:: %(message)s', level=logging.DEBUG)
 
 
 # Adding custom validation that the first 3 digit is from a set of values
@@ -20,21 +23,21 @@ parser = StringParser().add_func(_first_three_char_check)
 parser_func = parser.build()
 
 input_data = "ABC2344"
-print('#' * 50, " ADDING CUSTOM VALIDATOR ", '#' * 50)
-print('====>', "Valid Input:")
-print("Input: {}".format(input_data))
-print("Output: {}".format(parser_func(input_data)))
-print('\n')
+logging.info(('#' * 50) + " ADDING CUSTOM VALIDATOR " + ('#' * 50))
+logging.info("====> Valid Input:")
+logging.info("Input: {}".format(input_data))
+logging.info("Output: {}".format(parser_func(input_data)))
+logging.info('\n')
 
 input_data = "PQR12344"
-print('====>', "Invalid Input:")
+logging.info("====> Invalid Input:")
 try:
-    print("Invalid Input: {}".format(input_data))
+    logging.info("Invalid Input: {}".format(input_data))
     parser_func(input_data)
 except Exception as e:
-    print("Raised Exception: {}".format(str(e)))
+    logging.error("Raised Exception: {}".format(str(e)))
 finally:
-    print("\n\n")
+    logging.info("\n\n")
 
 
 # Special Feature 2: Data Slicing
@@ -45,21 +48,21 @@ slicing_parser = StringParser(start=1, end=3).value_set(['ABC', 'DEF'])
 slicing_parser_func = slicing_parser.build()
 
 input_data = "ABC|2344"
-print('#' * 50, " SLICING DATA ", '#' * 50)
-print('====>', "Valid Input:")
-print("Input: {}".format(input_data))
-print("Output: {}".format(slicing_parser_func(input_data)))
-print('\n')
+logging.info(('#' * 50) + " SLICING DATA " + ('#' * 50))
+logging.info("====> Valid Input:")
+logging.info("Input: {}".format(input_data))
+logging.info("Output: {}".format(slicing_parser_func(input_data)))
+logging.info('\n')
 
 input_data = "PQR|2344"
-print('====>', "Invalid Input:")
+logging.info("====> Invalid Input:")
 try:
-    print("Invalid Input: {}".format(input_data))
+    logging.info("Invalid Input: {}".format(input_data))
     slicing_parser_func(input_data)
 except Exception as e:
-    print("Raised Exception: {}".format(str(e)))
+    logging.error("Raised Exception: {}".format(str(e)))
 finally:
-    print("\n\n")
+    logging.info("\n\n")
 
 
 # Special Feature 3: Parser Creation Syntactic Sugar
@@ -74,8 +77,8 @@ parser = StringParser().not_null()
 parser_func = parser()  # Instead of using `build()` we directly called the parser object
 
 input_data = "ABC|2344"
-print('#' * 50, " SYNTACTIC SUGAR ", '#' * 50)
-print('====>', "Valid Input:")
-print("Input: {}".format(input_data))
-print("Output: {}".format(parser_func(input_data)))
-print('#' * 125)
+logging.info(('#' * 50) + " SYNTACTIC SUGAR " + ('#' * 50))
+logging.info("====> Valid Input:")
+logging.info("Input: {}".format(input_data))
+logging.info("Output: {}".format(parser_func(input_data)))
+logging.info('#' * 125)
