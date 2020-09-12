@@ -1,4 +1,5 @@
 import pprint
+import logging
 from parseval.parser import Parser
 from parseval.parser import (
     StringParser,
@@ -17,6 +18,7 @@ from parseval.parser import (
 # First element of each element is the column name, this is just for reference, no internal usage
 # Second element of each tuple is the actual parser (parser objects, not built parser function)
 
+logging.basicConfig(format='%(levelname)s:%(asctime)s:: %(message)s', level=logging.DEBUG)
 fw_schema = [
     ('ID', StringParser(1, 2)),
     ('NAME', StringParser(3, 5).change_case('U').not_null('nan', allow_white_space=True)),
@@ -26,14 +28,15 @@ fw_schema = [
     ('BIRTH_YEAR', IntegerParser(12, 13).max_value(20)),
     ('BALANCE', FloatParser(14, 17).min_value(10.0))
 ]
-p = Parser(schema=fw_schema, stop_on_error=1, input_row_format='fixed-width', parsed_row_format='json')
-print('#' * 50, " FIXED WIDTH DATASET PARSING ", '#' * 50)
+p = Parser(schema=fw_schema, stop_on_error=1, input_row_format='fixed-width', parsed_row_format='dict')
+logging.info(('#' * 50) + " FIXED WIDTH DATASET PARSING " + ('#' * 50))
 parsed_data = p.parse([
     'd0sauMvalue191000',
     'd0pouM     2090.03',
     'd0pouX     2090.03'
 ])
-print("\n\n>>> Parsed Data:")
+logging.info("\n\n")
+logging.info(">>> Parsed Data:")
 for data in parsed_data:
-    pprint.pprint(data)
-print('#' * 125)
+    logging.info(pprint.pformat(data))
+logging.info('#' * 125)
