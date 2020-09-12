@@ -24,10 +24,10 @@ from parseval.parser import (
 def _parity_check(data):
     if data:
         try:
-            i_Data = int(data)
+            i_data = int(data)
         except:
             pass
-        if i_Data % 2 != 0:
+        if i_data % 2 != 0:
             raise Exception("The data has to be even!")
     return data
 

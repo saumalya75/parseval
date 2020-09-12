@@ -1,3 +1,4 @@
+import json
 import re
 import sys
 import typing
@@ -6,33 +7,39 @@ import functools
 import traceback
 
 try:
-    from parseval.exceptions import UnexpectedSystemException, \
-        UnexpectedParsingException, \
-        UnsupportedDatatypeException, \
-        SchemaBuildException, \
-        NullValueInNotNullFieldException, \
-        ValidValueCheckException, \
-        MaximumValueConstraintException, \
-        MinimumValueConstraintException, \
-        RegexMatchException, \
-        IntegerParsingException, \
-        FloatParsingException, \
-        BooleanParsingException, \
+    from parseval.exceptions import (
+        UnexpectedSystemException,
+        UnexpectedParsingException,
+        UnsupportedDatatypeException,
+        SchemaBuildException,
+        NullValueInNotNullFieldException,
+        ValidValueCheckException,
+        MaximumValueConstraintException,
+        MinimumValueConstraintException,
+        RegexMatchException,
+        StringParsingException,
+        IntegerParsingException,
+        FloatParsingException,
+        BooleanParsingException,
         DateTimeParsingException
+    )
 except ImportError:
-    from exceptions import UnexpectedSystemException, \
-        UnexpectedParsingException, \
-        UnsupportedDatatypeException, \
-        SchemaBuildException, \
-        NullValueInNotNullFieldException, \
-        ValidValueCheckException, \
-        MaximumValueConstraintException, \
-        MinimumValueConstraintException, \
-        RegexMatchException, \
-        IntegerParsingException, \
-        FloatParsingException, \
-        BooleanParsingException, \
+    from exceptions import (
+        UnexpectedSystemException,
+        UnexpectedParsingException,
+        UnsupportedDatatypeException,
+        SchemaBuildException,
+        NullValueInNotNullFieldException,
+        ValidValueCheckException,
+        MaximumValueConstraintException,
+        MinimumValueConstraintException,
+        RegexMatchException,
+        StringParsingException,
+        IntegerParsingException,
+        FloatParsingException,
+        BooleanParsingException,
         DateTimeParsingException
+    )
 
 
 class FieldParser:
@@ -97,7 +104,7 @@ class FieldParser:
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise IntegerParsingException("Column value - {} could not be casted into Integer.".format(data))
+                raise UnexpectedParsingException("Column value - {} could not be casted into {}.".format(data, self.TYPE))
 
         self.add_func(type_casting)
 
@@ -144,7 +151,7 @@ class FieldParser:
         :return: FieldParser
             self
         """
-        if type(default_value) != self.TYPE:
+        if default_value and type(default_value) != self.TYPE:
             raise UnsupportedDatatypeException(f"{type(default_value)} type data can not be used as default value of"
                                                f" {self.TYPE} type column. Please provide default value of"
                                                f" {self.TYPE} type.")
@@ -172,7 +179,7 @@ class FieldParser:
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(null_check)
 
@@ -217,7 +224,7 @@ class FieldParser:
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(valid_value_check)
 
@@ -255,7 +262,7 @@ class FieldParser:
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(valid_value_check)
 
@@ -294,7 +301,7 @@ class FieldParser:
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(valid_value_check)
 
@@ -351,7 +358,7 @@ class StringParser(FieldParser):
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise FloatParsingException("Column value - {} could not be casted into String.".format(data))
+                raise StringParsingException("Column value - {} could not be casted into String.".format(data))
 
         self.add_func(string_casting)
 
@@ -387,7 +394,7 @@ class StringParser(FieldParser):
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(pattern_match)
 
@@ -450,7 +457,9 @@ class StringParser(FieldParser):
                 if data is not None:
                     data = data if allow_white_space else type(data)(str(data).strip())
                 if not data:
-                    if default_value is not None:
+                    if allow_white_space and data is not None:
+                        return data
+                    elif default_value is not None:
                         if self.enforce_type:
                             return str(default_value)
                         else:
@@ -463,7 +472,7 @@ class StringParser(FieldParser):
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(null_check)
 
@@ -552,11 +561,11 @@ class BooleanParser(FieldParser):
                     else:
                         self.TYPE(data)
                 return data
-            except Exception:
+            except Exception as e:
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise BooleanParsingException("Column value - {} could not be casted into Boolean.".format(data))
+                raise e
 
         self.add_func(boolean_casting)
 
@@ -578,7 +587,7 @@ class DatetimeParser(FieldParser):
     def __init__(self,
                  start: int = 0,
                  end: int = 0,
-                 formats: typing.List = ['%Y%m%d', '%Y%md%H%M%S'],
+                 formats: typing.List = ['%Y%m%d', '%Y%m%d%H%M%S'],
                  quoted: int = 0,
                  enforce_type: bool = True
                  ):
@@ -628,7 +637,7 @@ class DatetimeParser(FieldParser):
                     else:
                         datetime.datetime.strptime(str(data), f)
                         break
-                except Exception:
+                except:
                     pass
             else:
                 raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
@@ -640,7 +649,7 @@ class DatetimeParser(FieldParser):
 
     def not_null(self,
                  default_value: typing.Union[str, datetime.datetime] = None,
-                 format: str = '%Y-%m-%d %H:%M:%S'):
+                 format: str = '%Y%m%d%H%M%S'):
         """
         Building not null check closure.
         :param default_value: typing.Union[str, datetime.datetime]
@@ -686,11 +695,11 @@ class DatetimeParser(FieldParser):
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(null_check)
 
-    def convert(self, format: str = '%Y-%m-%d'):
+    def convert(self, format: str = '%Y%m%d%H%M%S'):
         """
         Closure to convert datetime/date column to desired string format
         :param format: str
@@ -716,7 +725,7 @@ class DatetimeParser(FieldParser):
                         try:
                             data = datetime.datetime.strptime(str(data), f)
                             break
-                        except Exception:
+                        except:
                             pass
                     else:
                         raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
@@ -735,7 +744,7 @@ class DatetimeParser(FieldParser):
 
     def max_value(self,
                   value: typing.Union[str, datetime.datetime],
-                  format: str = '%Y-%m-%d %H:%M:%S'):
+                  format: str = '%Y%m%d%H%M%S'):
         """
         Building maximum value check closure.
         :param value: typing.Union[str, datetime.datetime]
@@ -792,13 +801,13 @@ class DatetimeParser(FieldParser):
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(valid_value_check)
 
     def min_value(self,
                   value: typing.Union[str, datetime.datetime],
-                  format: str = '%Y-%m-%d %H:%M:%S'):
+                  format: str = '%Y%m%d%H%M%S'):
         """
         Building minimum value check closure.
         :param value: typing.Union[str, datetime.datetime]
@@ -855,14 +864,14 @@ class DatetimeParser(FieldParser):
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(valid_value_check)
 
     def range(self,
               lower_bound: typing.Union[str, datetime.datetime],
               upper_bound: typing.Union[str, datetime.datetime],
-              format: str = '%Y-%m-%d %H:%M:%S'
+              format: str = '%Y%m%d%H%M%S'
               ):
         """
         Building range check API, max_val and min_val APIs will be used to achieve this.
@@ -881,7 +890,7 @@ class DatetimeParser(FieldParser):
 
     def value_set(self,
                   values: typing.List[typing.Union[str, datetime.datetime]],
-                  format: str = '%Y-%m-%d %H:%M:%S',
+                  format: str = '%Y%m%d%H%M%S',
                   nullable: bool = True
                   ):
         """
@@ -932,12 +941,14 @@ class DatetimeParser(FieldParser):
                         try:
                             pd = datetime.datetime.strptime(str(data), f)
                             break
-                        except Exception:
+                        except:
                             pass
                     else:
                         raise DateTimeParsingException("Column data - '{}' is not in any of the following formats - {}."
                                                        .format(data, self._formats)
                                                        )
+                else:
+                    pd = data
                 if pd not in valid_values:
                     raise ValidValueCheckException(
                         "Provided value - '{}' is not part of valid value list - {}.".format(data, values))
@@ -947,7 +958,7 @@ class DatetimeParser(FieldParser):
                 print('~' * 100)
                 traceback.print_exc(file=sys.stdout)
                 print('~' * 100)
-                raise UnexpectedParsingException()
+                raise e
 
         return self.add_func(valid_value_check)
 
@@ -1006,15 +1017,32 @@ class Parser:
         self.input_row_sep: str = input_row_sep
         self.schema: typing.List[typing.Tuple] = schema
         self.parsed_row_format: str = parsed_row_format
+        if self.parsed_row_format not in ["delimited", "fixed-width", "json", "dict"]:
+            raise UnexpectedSystemException(
+                "Unsupported output format. Allowed formats are 'delimited', 'fixed-width' (available only for 'fixed-width' formatted input), 'json' (only available for json formatted input) and 'dict'."
+            )
         if self.parsed_row_format == "delimited":
             if not parsed_row_sep:
                 if self.input_row_sep:
                     self.parsed_row_sep = self.input_row_sep
                 else:
-                    raise Exception(
-                        "`parsed_sep` keyword argment is mandatory while `parsed_row_format` argumet is provided as 'delimited'.")
+                    raise UnexpectedSystemException(
+                        "`parsed_sep` keyword argument is mandatory while `parsed_row_format` argumet is provided as 'delimited'."
+                    )
             else:
                 self.parsed_row_sep: str = parsed_row_sep
+        if self.parsed_row_format == "fixed-width" and self.input_row_format != "fixed-width":
+            raise UnexpectedSystemException(
+                "`fixed-width` formatted output is only supported for `fixed-width` formatted input."
+            )
+        if self.input_row_format == "json" and self.parsed_row_format not in ["json", "dict"]:
+            raise UnexpectedSystemException(
+                "Only `json` and `dict` formatted output are supported for `jaon` formatted input."
+            )
+        if self.parsed_row_format == "json" and self.input_row_format != "json":
+            raise UnexpectedSystemException(
+                "Only `json` formatted input can be converted to `jaon` formatted output."
+            )
         self.stop_on_error = stop_on_error
         self._parser_funcs: typing.Dict = {}
 
@@ -1115,10 +1143,14 @@ class Parser:
                             raise
                         if self.parsed_row_format == "delimited":
                             plist.append(pd)
+                        if self.parsed_row_format == "fixed-width":
+                            pass
                         else:
                             pdict[col[0]] = pd
                     if self.parsed_row_format == "delimited":
                         yield self.parsed_row_sep.join((str(e) for e in plist))
+                    elif self.parsed_row_format == "fixed-width":
+                        yield d
                     else:
                         yield pdict
                     line_number += 1
@@ -1134,42 +1166,47 @@ class Parser:
         else:
             line_number = 0
             errornous_line_count = 0
+            json_allowed = None
             for d in data:
                 try:
+                    if type(d) == str:
+                        json_allowed = True
+                        d = json.loads(d)
                     if len(list(d.keys())) > len(self.schema):
                         raise UnexpectedParsingException(
                             "Number of columns in line - {} is higher that number of declared columns in schema.".format(
                                 line_number + 1
                             )
                         )
-                    plist: typing.List = []
                     pdict: typing.Dict = {}
                     for col, _ in self.schema:
-                        if d.get(col, None):
+                        if col in list(d.keys()):
                             try:
-                                pd = self._parser_funcs[col](d[col])
-                            except:
+                                pdict[col] = self._parser_funcs[col](d[col])
+                            except Exception as e:
                                 print("<" * 50, end='')
                                 print(">" * 50)
                                 print('LINE NUMBER: {}'.format(
                                     line_number + 1
                                 ))
                                 print('COLUMN NAME: {}'.format(
-                                    col[0]
+                                    col
                                 ))
                                 print("<" * 50, end='')
                                 print(">" * 50)
-                                raise
-                            if self.parsed_row_format == "delimited":
-                                plist.append(pd)
-                            else:
-                                pdict[col[0]] = pd
-                    if self.parsed_row_format == "delimited":
-                        yield self.parsed_row_sep.join(plist)
+                                raise e
+                    if self.parsed_row_format == "json":
+                        if not json_allowed:
+                            raise UnexpectedSystemException(
+                                "`json` formatted output is not supported for `dict` formatted input."
+                            )
+                        yield json.dumps(d)
                     else:
                         yield pdict
                     line_number += 1
                 except Exception as e:
+                    if isinstance(e, UnexpectedSystemException):
+                        raise e
                     if self.stop_on_error < 0 or errornous_line_count < self.stop_on_error:
                         print(str(e))
                         print("DATA >>> ")
@@ -1178,4 +1215,3 @@ class Parser:
                         print("CONTINUING TO PARSE DATA BECAUSE STOP_ON_ERROR CONDITION NOT MET YET!")
                     else:
                         raise e
-        # return pdata
