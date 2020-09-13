@@ -15,7 +15,15 @@ Currently `parseval` supports following data types:
 </pre>  
 The library will be updated in future to support more native data types and some complex types. Users can also create their own parser class just by inheriting the `FieldParser` class, but they have to follow build design pattern, like it is done in the existing parsers.    
 <pre>  
-</pre>  
+</pre>
+## How to get it?
+The simplest of them all, run following pip install command inside your virtual environment or wherever you like:
+
+`pip install parseval`
+
+Voila!!
+<pre>  
+</pre>
 >**API reference:**  [https://parseval.readthedocs.io/en/latest/](https://parseval.readthedocs.io/en/latest/)  
 <pre>  
   
@@ -260,3 +268,5 @@ If the source data rows are not delimited like previous case, instead it is fixe
 ---  
 ---  
 **_That's all from my end. Hope you find the library useful in your daily data engineering. Please reach out for any queries or suggestion. Feel free to use and enrich the code. I am always avaiable at saumalya75@gmail.com and **linkedin.com/in/saumalya-sarkar-b3712817b_**
+<pre></pre>
+#Happy Parsing!!
