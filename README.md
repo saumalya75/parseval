@@ -190,17 +190,17 @@ The process contains three simple steps,
   
 First let's built the schema, schema structure must be `list of tuples`, tuples will hold the `column name` as first element and the parser definition as second element. The sequence of list should match the column list in a record. We will create one file to use as a source file also:  
 ```  
->>> from parseval.parser import StringParser, IntegerParser,DatetimeParser, Parser  
+>>> from parseval.parser import StringParser, IntegerParser,DatetimeParser
+>>> from parseval.parser import Parser  
 >>> with open('some_file.txt', 'w') as sf:  
 >>>       sf.writelines('1|MAEVE WILEY|19911024')  
 >>>       sf.writelines('2|OTIS MILLBURN|19920314')  
->>> schema = [  
- ('id`, IntegerParser(enforce_type=False).not_null()), ('name`, StringParser(enforce_type=False).not_null().regex_match(r'DEMO\_.*')), ('dob`, DatetimeParser(formats='%Y%m%d', enforce_type=False).convert('%Y/%m/%d'))]  
+>>> schema = [('id', IntegerParser(enforce_type=False).not_null()), ('name', StringParser(enforce_type=False).not_null()), ('dob', DatetimeParser(formats=['%Y%m%d'], enforce_type=False).convert('%Y/%m/%d'))]
 ```  
 Now, we will create an object of `Parser` class. Notice, apart from `schema` we are providing some more parameters, to know the functionality of those parameters in depth, please visit the API reference link mentioned above.  
-```  
+```
 >>> parser_obj = Parser(schema=schema,  
- input_row_format = "delimited", parsed_row_format = "json", input_row_sep = "|", stop_on_error=0 )
+ input_row_format = "delimited", parsed_row_format = "dict", input_row_sep = "|", stop_on_error=0 )
  ```  
 Now that we have the schema and the parsed object, we can parse the data:  
 ```  
@@ -210,7 +210,20 @@ Now that we have the schema and the parsed object, we can parse the data:
 >>>    print(l)  
 {'id': 1, 'name': 'MAEVE WILEY', 'dob': '1991/10/24'}  
 {'id': 2, 'name': 'OTIS MILLBURN', 'dob': '1992/03/14'}  
-```  
+```
+<pre></pre>
+Parser takes any kind of `iterator` as input data wrapper, provided that the wrapper returns one row at a time while looping. The data wrappers can be anything like `File I/O Wrapper`, `List`, `Generator Object` etc etc. It accepts data in multiple formats also, which can be tweaked using `input_row_format` parameter while creating the `Parser` object. Supported formats are:
+- `delimited`: Delimited Lines in `String` format (`input_row_sep` parameter can be used to specify the delimiter, by-default it is `|`)
+- `fixed-width`: Fixed-width Lines in `String` format
+- `json`: Python `dictionary` object or `Json` data
+<pre></pre>
+Naturally parser supports multiple output data formats also, but keep in mind it will always return an generator object encapsulating the output rows. Supported output formats are:
+- `delimited`: Delimited Lines in `String` format (`parsed_row_sep` parameter must be used to specify the delimiter)
+- `fixed-width`: Fixed-width Lines in `String` format, _Supported only if the `input_row_format` is `fixed-width` type._
+- `dict`: Python `dictionary` object, keys will the column names in the provided schema.
+- `json`: `Json` data, _Supported only if the `input_row_format` is `json` type and the input data is `Json` data (Python `Dict` is also not supported)._ This constraint is to make sure the serialize-ability of the data.
+<pre></pre>
+_**Note Again:** Irrespective of the output data format, the rows/lines will always be in wrapped in Python `Generator` object._
 <pre>  
   
 </pre>  
