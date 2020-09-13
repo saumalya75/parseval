@@ -210,19 +210,19 @@ Now that we have the schema and the parsed object, we can parse the data:
 >>>    print(l)  
 {'id': 1, 'name': 'MAEVE WILEY', 'dob': '1991/10/24'}  
 {'id': 2, 'name': 'OTIS MILLBURN', 'dob': '1992/03/14'}  
-```  
-The library takes in any kind of iterator as input data wrapper, provided that the wrapper returns one row at a time while looping. The data wrappers can be anything like `File I/O Wrapper`, `List`, `Generator Object` etc etc.
+```
 <pre></pre>
-The library accepts data in multiple formats also, which can be tweaked using `input_row_format` parameter while creating the `Parser` object. Supported formats are:
+Parser takes any kind of `iterator` as input data wrapper, provided that the wrapper returns one row at a time while looping. The data wrappers can be anything like `File I/O Wrapper`, `List`, `Generator Object` etc etc. it accepts data in multiple formats also, which can be tweaked using `input_row_format` parameter while creating the `Parser` object. Supported formats are:
 - `delimited`: Delimited Lines in String format (`input_row_sep` parameter can be used to specify the delimiter, by0default it is `|`)
 - `fixed-width`: Fixed-width Lines in String format
 - `json`: Python `dictionary` object or `Json` data
 <pre></pre>
-Naturally the library supports multiple output data formats also, but keep in mind it will always return an generator object encapsulating the output rows. Supported output formats are:
+Naturally parser supports multiple output data formats also, but keep in mind it will always return an generator object encapsulating the output rows. Supported output formats are:
 - `delimited`: Delimited Lines in String format (`parsed_row_sep` parameter must be used to specify the delimiter)
 - `fixed-width`: Fixed-width Lines in String format, _Supported only if the `input_row_format` is `fixed-width` type._
 - `dict`: Python `dictionary` object, keys will the column names in the provided schema.
 - `json`: `Json` data, _Supported only if the `input_row_format` is `json` type and the input data is `Json` data (Python `Dict` is also not supported)._ This constraint is to make sure the serialize-ability of the data.
+<pre></pre>
 _**Note Again:** Irrespective of the output data format, the rows/lines will always be in wrapped in Python `Generator` object._
 <pre>  
   
