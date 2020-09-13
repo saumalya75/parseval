@@ -3,7 +3,7 @@
 
 ## FieldParser:
 
-**Signature**: _FieldParser(start: int = 0, end: int = 0, quoted: int = 0)_
+**Signature**: _FieldParser(start: int = 0, end: int = 0, quoted: int = 0, enforce_type: bool = True)_
 
 **Parameters**:
 
@@ -12,6 +12,8 @@
 - `end`: End position of the data in row
 
 - `quoted`: Data quotation options - {0: Not Quoted, 1: Double Quoted, 2: Single Quoted}
+
+- `enforce_type`: Type conversion control - {True:  Output data type will be `str`, False: Datatype of input will be preserved}. By-default it is set ot `True`.
 
 Available APIs:
 
@@ -75,7 +77,7 @@ Available APIs:
 
 ## StringParser:
 
-**Signature**: _StringParser(start: int = 0, end: int = 0, quoted: int = 0)_
+**Signature**: _StringParser(start: int = 0, end: int = 0, quoted: int = 0, enforce_type: bool = True)_
 
 **Parameters**:
 
@@ -84,6 +86,8 @@ Available APIs:
 - `end`: End position for the column in the row
 
 - `quoted`: Data quotation options - {0: Not Quoted, 1: Double Quoted, 2: Single Quoted}
+
+- `enforce_type`: Type conversion control - {True:  Output data type will be `str`, False: Datatype of input will be preserved}. By-default it is set ot `True`.
 
 Available APIs:
 
@@ -167,7 +171,7 @@ Available APIs:
 
 ## FloatParser:
 
-**Signature**: _FloatParser(start: int = 0, end: int = 0, quoted: int = 0)_
+**Signature**: _FloatParser(start: int = 0, end: int = 0, quoted: int = 0, enforce_type: bool = True)_
 
 **Parameters**:
 
@@ -176,6 +180,8 @@ Available APIs:
 - `end`: End position for the column in the row
 
 - `quoted`: Data quotation options - {0: Not Quoted, 1: Double Quoted, 2: Single Quoted}
+
+- `enforce_type`: Type conversion control - {True:  Output data type will be `float`, False: Datatype of input will be preserved}. By-default it is set ot `True`.
 
 Available APIs:
 
@@ -239,7 +245,7 @@ Available APIs:
 
 ## IntegerParser:
 
-**Signature**: _IntegerParser(start: int = 0, end: int = 0, quoted: int = 0)_
+**Signature**: _IntegerParser(start: int = 0, end: int = 0, quoted: int = 0, enforce_type: bool = True)_
 
 **Parameters**:
 
@@ -248,6 +254,8 @@ Available APIs:
 - `end`: End position for the column in the row
 
 - `quoted`: Data quotation options - {0: Not Quoted, 1: Double Quoted, 2: Single Quoted}
+
+- `enforce_type`: Type conversion control - {True:  Output data type will be `int`, False: Datatype of input will be preserved}. By-default it is set ot `True`.
 
 Available APIs:
 
@@ -309,9 +317,25 @@ Available APIs:
 >
 ---
 
+## BooleanParser:
+
+**Signature**: _BooleanParser(start: int = 0, end: int = 0, quoted: int = 0, enforce_type: bool = True)_
+
+**Parameters**:
+
+- `start`: Start position for the column in the row
+
+- `end`: End position for the column in the row
+
+- `quoted`: Data quotation options - {0: Not Quoted, 1: Double Quoted, 2: Single Quoted}
+
+- `enforce_type`: Type conversion control - {True:  Output data type will be `int`, False: Datatype of input will be preserved}. By-default it is set ot `True`.
+
+---
+
 ## DatetimeParser:
 
-**Signature**: _DatetimeParser(start: int = 0, end: int = 0, formats: typing.List =['%Y%m%d', '%Y%md%H%M%S'], quoted: int = 0)_
+**Signature**: _DatetimeParser(start: int = 0, end: int = 0, formats: typing.List =['%Y%m%d', '%Y%m%d%H%M%S'], quoted: int = 0, enforce_type: bool = True)_
 
 **Parameters**:
 
@@ -323,9 +347,11 @@ Available APIs:
 
 - `quoted`: Data quotation options - {0: Not Quoted, 1: Double Quoted, 2: Single Quoted}
 
+- `enforce_type`: Type conversion control - {True: Output data type will be `datetime.datetime`, False: Datatype of input will be preserved}. By-default it is set ot `True`.
+
 Available APIs:
 
-> **Signature**: _not_null(default_value: typing.Union[str, datetime.datetime] = None, format: str = '%Y-%m-%d %H:%M:%S')_
+> **Signature**: _not_null(default_value: typing.Union[str, datetime.datetime] = None, format: str = '%Y%m%d%H%M%S')_
 >
 > **Parameters**:
 >
@@ -335,7 +361,7 @@ Available APIs:
 <pre>
 </pre>
 >
-> **Signature**: _value_set(values: typing.List[typing.Union[str, datetime.datetime]], format='%Y-%m-%d %H:%M:%S', nullable: bool = True)_
+> **Signature**: _value_set(values: typing.List[typing.Union[str, datetime.datetime]], format='%Y%m%d%H%M%S', nullable: bool = True)_
 >
 > **Parameters**:
 >
@@ -346,7 +372,7 @@ Available APIs:
 <pre>
 </pre>
 >
-> **Signature**: _max_value(value: typing.Union[str, datetime.datetime], format: str = '%Y-%m-%d %H:%M:%S')_
+> **Signature**: _max_value(value: typing.Union[str, datetime.datetime], format: str = '%Y%m%d%H%M%S')_
 >
 > **Parameters**:
 >
@@ -356,7 +382,7 @@ Available APIs:
 <pre>
 </pre>
 >
-> **Signature**: _min_value(value: typing.Union[str, datetime.datetime], format: str = '%Y-%m-%d %H:%M:%S')_
+> **Signature**: _min_value(value: typing.Union[str, datetime.datetime], format: str = '%Y%m%d%H%M%S')_
 >
 > **Parameters**:
 >
@@ -366,7 +392,7 @@ Available APIs:
 <pre>
 </pre>
 >
-> **Signature**: _range(lower_bound: typing.Union[str, datetime.datetime], upper_bound: typing.Union[str, datetime.datetime], format='%Y-%m-%d %H:%M:%S')_
+> **Signature**: _range(lower_bound: typing.Union[str, datetime.datetime], upper_bound: typing.Union[str, datetime.datetime], format='%Y%m%d%H%M%S')_
 >
 > **Parameters**:
 >
